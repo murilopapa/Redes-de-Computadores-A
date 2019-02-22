@@ -7,7 +7,7 @@
 #include <arpa/inet.h>
 
 /*
- * Cliente UDP Murilo lindo
+ * Cliente UDP
  */
 void main(argc, argv) int argc;
 char **argv;
