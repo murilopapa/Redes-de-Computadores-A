@@ -15,8 +15,8 @@ char **argv;
 
     int s, server_address_size; //descritor do socket
     unsigned short port;
-    struct sockaddr_in server; //aqui sera armazenado o endereco do servidor
-    char buf[200], res[2000];  //buf eh o conteudo a ser enviado ao servidor, em res sera armazenada sua resposta
+    struct sockaddr_in server, client; //aqui sera armazenado o endereco do servidor
+    char buf[200], res[2000];          //buf eh o conteudo a ser enviado ao servidor, em res sera armazenada sua resposta
 
     /* 
     * O primeiro argumento (argv[1]) � o endere�o IP do servidor.
@@ -29,7 +29,7 @@ char **argv;
         exit(1);
     }
 
-    port = ntohs(atoi(argv[2])); //converte o valor recebido para adequar-se ao numero da porta do servidor (1024 = 4)
+    port = atoi(argv[2]); //converte o valor recebido para adequar-se ao numero da porta do servidor (1024 = 4)
     printf("%u\n", port);
 
     /*
@@ -74,7 +74,18 @@ char **argv;
         }
 
         printf("resposta do servidor ao comando %s: \n\n %s\n\n", buf, res);
+        int namelen = sizeof(client);
 
+        if (getsockname(s, (struct sockaddr *)&client, &namelen) < 0) //getsockname retorna o IP ao qual o socket esta ligado (ao &server -> server.sin_addr.s_addr)
+        {
+            perror("getsockname()");
+            exit(1);
+        }
+
+        //imprime o endereco do client
+        printf("O endereco e: %d\n", client.sin_addr.s_addr);
+        /* Imprime qual porta foi utilizada. */
+        printf("Porta utilizada eh: %d\n", ntohs(client.sin_port));
     } while (strcmp(buf, "exit") != 0);
 
     /* Fecha o socket apenas quando o cliente digitar "exit" */

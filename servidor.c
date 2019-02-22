@@ -6,17 +6,19 @@
 #include <arpa/inet.h>
 #include <string.h>
 
+#define MSG_SIZE 200
+
 /*
  * Servidor UDP
  */
 void main(argc, argv) int argc;
 char **argv;
 {
-    char comando1[200], comando2[200], comandoexit[200];
+    char comando1[MSG_SIZE], comando2[MSG_SIZE], comandoexit[MSG_SIZE];
     char resposta1[2000], resposta2[2000], respostafinal[2000], reserro[2000];
     int sockint, s, namelen, client_address_size;
     struct sockaddr_in client, server;
-    char buf[200];
+    char buf[MSG_SIZE];
 
     unsigned short port;
 
@@ -35,8 +37,8 @@ char **argv;
     }
 
     //host byte to network byte
-    port = htons(atoi(argv[1])); //recebe o numero da porta atraves do parametro dado no terminal
-    
+    port = atoi(argv[1]); //recebe o numero da porta atraves do parametro dado no terminal
+
     printf("%u\n", port);
 
     /*
@@ -49,17 +51,17 @@ char **argv;
     }
 
     /*
-    * Define a qual endere�o IP e porta o servidor estar� ligado.
+    * Define a qual endereço IP e porta o servidor estará ligado.
     * Porta = 0 -> faz com que seja utilizada uma porta qualquer livre.
     * IP = INADDDR_ANY -> faz com que o servidor se ligue em todos
-    * os endere�os IP
+    * os endereços IP
     */
-    server.sin_family = AF_INET;                                          /* Tipo do endere�o             */
-    server.sin_port = port; /* Escolhe uma porta dispon�vel */            //para que a mensagem chegue ao servidor, a porta do cliente deve ser a mesma daqui
-    server.sin_addr.s_addr = INADDR_ANY; /* Endere�o IP do servidor    */ //INADDR_ANY liga o socket a todos as interfaces (portas) disponiveis INADDR_ANY pode assumir qualquer endereco IP do host
+    server.sin_family = AF_INET;                                          /* Tipo do endereço             */
+    server.sin_port = port; /* Escolhe uma porta disponível */            //para que a mensagem chegue ao servidor, a porta do cliente deve ser a mesma daqui
+    server.sin_addr.s_addr = INADDR_ANY; /* Endereço IP do servidor    */ //INADDR_ANY liga o socket a todos as interfaces (portas) disponiveis INADDR_ANY pode assumir qualquer endereco IP do host
 
     /*
-    * Liga o servidor � porta definida anteriormente.
+    * Liga o servidor á porta definida anteriormente.
     */
     if (bind(s, (struct sockaddr *)&server, sizeof(server)) < 0) //bind designa um nome ao socket cujo IP esta associado ao addr
     {
@@ -76,10 +78,10 @@ char **argv;
     }
 
     //imprime o endereco do servidor
-    //printf("o endereco e: %u\n",server.sin_addr.s_addr ); OK
+    printf("o endereco e: %d\n", server.sin_addr.s_addr);
 
     /* Imprime qual porta foi utilizada. */
-    //printf("Porta utilizada eh: %d\n", ntohs(server.sin_port)); OK
+    printf("Porta utilizada eh: %d\n", ntohs(server.sin_port));
 
     namelen = sizeof(client);
     if (getsockname(s, (struct sockaddr *)&client, &namelen) < 0) //enderece ip do cliente
@@ -109,7 +111,7 @@ char **argv;
         printf("Recebida a mensagem '%s' do endereco IP %s da porta %d\n", buf, inet_ntoa(client.sin_addr), ntohs(client.sin_port));
 
         if (strcmp(buf, comando1) == 0)
-        {   //comando1 recebido do cliente
+        { //comando1 recebido do cliente
             //printf("comando clima recebido\n"); //OK
             if (sendto(s, resposta1, strlen(resposta1) + 1, 0, (struct sockaddr *)&client, sizeof(client)) < 0)
             {
@@ -136,7 +138,7 @@ char **argv;
             }
         }
         else
-        {   //caso o comando nao seja valido
+        { //caso o comando nao seja valido
             //printf("comando desconhecido recebido\n"); //OK
             if (sendto(s, reserro, strlen(reserro) + 1, 0, (struct sockaddr *)&client, sizeof(client)) < 0)
             {
