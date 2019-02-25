@@ -12,7 +12,7 @@
 void main(argc, argv) int argc;
 char **argv;
 {
-
+    printf("**CLIENTE INICIADO**\n");
     int s, server_address_size; //descritor do socket
     unsigned short port;
     struct sockaddr_in server, client; //aqui sera armazenado o endereco do servidor
@@ -85,7 +85,7 @@ char **argv;
         //imprime o endereco do client
         printf("O endereco e: %d\n", client.sin_addr.s_addr);
         /* Imprime qual porta foi utilizada. */
-        printf("Porta utilizada eh: %d\n", ntohs(client.sin_port));
+        printf("Porta utilizada eh: %d\n", htons(client.sin_port));
     } while (strcmp(buf, "exit") != 0);
 
     /* Fecha o socket apenas quando o cliente digitar "exit" */

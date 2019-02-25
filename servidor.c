@@ -14,6 +14,7 @@
 void main(argc, argv) int argc;
 char **argv;
 {
+    printf("**SERVIDOR INICIADO**\n");
     char comando1[MSG_SIZE], comando2[MSG_SIZE], comandoexit[MSG_SIZE];
     char resposta1[2000], resposta2[2000], respostafinal[2000], reserro[2000];
     int sockint, s, namelen, client_address_size;
@@ -81,7 +82,7 @@ char **argv;
     printf("o endereco e: %d\n", server.sin_addr.s_addr);
 
     /* Imprime qual porta foi utilizada. */
-    printf("Porta utilizada eh: %d\n", ntohs(server.sin_port));
+    printf("Porta utilizada eh: %d\n", server.sin_port);
 
     namelen = sizeof(client);
     if (getsockname(s, (struct sockaddr *)&client, &namelen) < 0) //enderece ip do cliente
