@@ -20,24 +20,21 @@ char **argv;
     int sockint, s, namelen, client_address_size;
     struct sockaddr_in client, server;
     char buf[MSG_SIZE];
-	FILE *fp;
+    FILE *fp;
 
     memset(resposta, 0, sizeof(resposta));
     int return_fread;
     int size_sendto;
 
-
     unsigned short port;
 
     strcpy(respostafinal, "Obrigado por utilizar o servidor\n");
-
 
     if (argc != 2)
     {
         printf("Use: %s porta\n", argv[0]);
         exit(1);
     }
-
 
     port = atoi(argv[1]); //recebe o numero da porta atraves do parametro dado no terminal
 
@@ -58,7 +55,7 @@ char **argv;
     * IP = INADDDR_ANY -> faz com que o servidor se ligue em todos
     * os endereÃ§os IP
     */
-    server.sin_family = AF_INET;                                          /* Tipo do endereÃ§o             */
+    server.sin_family = AF_INET;                                           /* Tipo do endereÃ§o             */
     server.sin_port = port; /* Escolhe uma porta disponÃ­vel */            //para que a mensagem chegue ao servidor, a porta do cliente deve ser a mesma daqui
     server.sin_addr.s_addr = INADDR_ANY; /* EndereÃ§o IP do servidor    */ //INADDR_ANY liga o socket a todos as interfaces (portas) disponiveis INADDR_ANY pode assumir qualquer endereco IP do host
 
@@ -112,47 +109,47 @@ char **argv;
     * e a porta do cliente 
     */
         printf("Recebida a mensagem '%s' do endereco IP %s da porta %d\n", buf, inet_ntoa(client.sin_addr), ntohs(client.sin_port));
-	
 
+        /* Open the command for reading. */
+        fp = popen(buf, "r");
+        if (fp == NULL)
+        {
+            printf("Failed to run command\n");
+            exit(1);
+        }
 
-	/* Open the command for reading. */
-	fp = popen(buf, "r");
-	if (fp == NULL) {
-	    printf("Failed to run command\n" );
-	    exit(1);
-	}
+        fread(resposta, (sizeof(resposta) + 1), 1, fp); //le o conteudo apontado por fp e o armazena em resposta
 
-    fread(resposta, (sizeof(resposta)+1), 1, fp); //le o conteudo apontado por fp e o armazena em resposta
+        /* close */
+        pclose(fp);
 
-	/* close */
-	pclose(fp);
-	
-	//usar fread, ver qnt que ele leu
-	//printf("\n PRINT PATH ");
-	//printf("%s", path);
-	
+        //usar fread, ver qnt que ele leu
+        //printf("\n PRINT PATH ");
+        //printf("%s", path);
+
         if (strcmp(buf, "exit") == 0)
-        { //exit recebido do cliente
+        {                              //exit recebido do cliente
             printf("exit recebido\n"); //OK
             if (sendto(s, respostafinal, strlen(respostafinal) + 1, 0, (struct sockaddr *)&client, sizeof(client)) < 0)
-            {           
-                perror("sendto()");
-                exit(1);
-            }
-        }
-        else { //outro comando recebido do cliente
-            if (size_sendto = sendto(s, resposta, strlen(resposta) + 1, 0, (struct sockaddr *)&client, sizeof(client)) < 0)
             {
                 perror("sendto()");
                 exit(1);
             }
-	        printf("\n SIZE SENDTO: %d\n", size_sendto);
-        } 
-    } while(1);	//servidor continua sendo executado mesmo apos o cliente ser encerrado.
+        }
+        else
+        { //outro comando recebido do cliente
+            if ((size_sendto = sendto(s, resposta, strlen(resposta) + 1, 0, (struct sockaddr *)&client, sizeof(client))) < 0)
+            {
+                perror("sendto()");
+                exit(1);
+            }
+            printf("\n SIZE SENDTO: %d\n", size_sendto);
+            printf("\n STRLEN RESPOSTA + 1: %ld\n", strlen(resposta) + 1);
+        }
+    } while (1); //servidor continua sendo executado mesmo apos o cliente ser encerrado.
 
     /*
     * Fecha o socket.
     */
     close(s);
 }
-

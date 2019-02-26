@@ -53,8 +53,7 @@ char **argv;
 
         printf("> ");
         fgets(buf, sizeof(buf), stdin);
-        strtok(buf, "\n");	//tira o \n inserido pelo fgets
-   
+        strtok(buf, "\n"); //tira o \n inserido pelo fgets
 
         //scanf("%s", buf);
 
@@ -68,16 +67,16 @@ char **argv;
         //recebe a resposta do servidor
         server_address_size = sizeof(server);
 
-	int retorno_recv = 4;
+        int retorno_recv;
 
-        if ( retorno_recv = recvfrom(s, res, sizeof(res), 0, (struct sockaddr *)&server, &server_address_size) < 0) //recebe res do servidor
+        if ((retorno_recv = recvfrom(s, res, sizeof(res), 0, (struct sockaddr *)&server, &server_address_size)) < 0) //recebe res do servidor
         {
             perror("recvfrom()");
             exit(2);
         }
 
-	printf("RETORNO => %d \n",retorno_recv);
-        printf("resposta do servidor ao comando %s: \n\n %s\n\n", buf, res);
+        printf("RETORNO => %d \n", retorno_recv);
+        printf("resposta do servidor ao comando %s: \n\n%s\n\n", buf, res);
         int namelen = sizeof(client);
 
         if (getsockname(s, (struct sockaddr *)&client, &namelen) < 0) //getsockname retorna o IP ao qual o socket esta ligado (ao &server -> server.sin_addr.s_addr)
