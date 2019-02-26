@@ -20,6 +20,7 @@ char **argv;
     int sockint, s, namelen, client_address_size;
     struct sockaddr_in client, server;
     char buf[MSG_SIZE];
+	FILE *fp;
 
     unsigned short port;
 
@@ -110,19 +111,44 @@ char **argv;
     * e a porta do cliente 
     */
         printf("Recebida a mensagem '%s' do endereco IP %s da porta %d\n", buf, inet_ntoa(client.sin_addr), ntohs(client.sin_port));
+	
 
-        if (strcmp(buf, comando1) == 0)
+
+	char path[1035];
+	int return_fread;
+	  /* Open the command for reading. */
+	  fp = popen(buf, "r");
+	  if (fp == NULL) {
+	    printf("Failed to run command\n" );
+	    exit(1);
+	  }
+
+	  /* Read the output a line at a time - output it. */
+		fread(path, (sizeof(path)+1), 1, fp);
+
+	  /* close */
+	  pclose(fp);
+	
+	//usar fread, ver qnt que ele leu
+	printf("\n PRINT PATH ");
+	printf("%s", path);
+	
+
+	int size_sendto;
+        if (1)
         { //comando1 recebido do cliente
             //printf("comando clima recebido\n"); //OK
-            if (sendto(s, resposta1, strlen(resposta1) + 1, 0, (struct sockaddr *)&client, sizeof(client)) < 0)
+            if (size_sendto = sendto(s, path, strlen(path) + 1, 0, (struct sockaddr *)&client, sizeof(client)) < 0)
             {
                 perror("sendto()");
                 exit(1);
             }
+	printf("\n SIZE SENDTO: %d\n", size_sendto);
         }
         else if (strcmp(buf, comando2) == 0)
         { //comando2 recebido do cliente
             //printf("comando tempo recebido\n"); //OK
+
             if (sendto(s, resposta2, strlen(resposta2) + 1, 0, (struct sockaddr *)&client, sizeof(client)) < 0)
             {
                 perror("sendto()");
