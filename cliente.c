@@ -52,11 +52,11 @@ char **argv;
     { //enquanto o usuario nao desejar sair
 
         printf("> ");
-        /*fgets(buf, sizeof(buf), stdin);
-   strtok(buf, "\n");	//tira o \n inserido pelo fgets
-   */
+        fgets(buf, sizeof(buf), stdin);
+        strtok(buf, "\n");	//tira o \n inserido pelo fgets
+   
 
-        scanf("%s", buf);
+        //scanf("%s", buf);
 
         /* Envia a mensagem no buffer para o servidor */
         if (sendto(s, buf, (strlen(buf) + 1), 0, (struct sockaddr *)&server, sizeof(server)) < 0) //envia o buffer ao servidor
@@ -68,7 +68,7 @@ char **argv;
         //recebe a resposta do servidor
         server_address_size = sizeof(server);
 
-	int retorno_recv;
+	int retorno_recv = 4;
 
         if ( retorno_recv = recvfrom(s, res, sizeof(res), 0, (struct sockaddr *)&server, &server_address_size) < 0) //recebe res do servidor
         {

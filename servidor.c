@@ -16,21 +16,21 @@ char **argv;
 {
     printf("**SERVIDOR INICIADO**\n");
     char comando1[MSG_SIZE], comando2[MSG_SIZE], comandoexit[MSG_SIZE];
-    char resposta1[2000], resposta2[2000], respostafinal[2000], reserro[2000];
+    char resposta[2000], respostafinal[2000];
     int sockint, s, namelen, client_address_size;
     struct sockaddr_in client, server;
     char buf[MSG_SIZE];
 	FILE *fp;
 
+    memset(resposta, 0, sizeof(resposta));
+    int return_fread;
+    int size_sendto;
+
+
     unsigned short port;
 
-    strcpy(comando1, "clima");
-    strcpy(comando2, "tempo");
-    strcpy(comandoexit, "exit");
-    strcpy(resposta1, "O clima no Brasil no mes de fevereiro eh quente e chuvoso\n");
-    strcpy(resposta2, "O tempo hoje esta nublado e com ventos fortes\n");
     strcpy(respostafinal, "Obrigado por utilizar o servidor\n");
-    strcpy(reserro, "Comando nao reconhecido");
+
 
     if (argc != 2)
     {
@@ -98,9 +98,10 @@ char **argv;
     */
     do
     {
+        memset(resposta, 0, sizeof(resposta));
 
         client_address_size = sizeof(client);
-        if (recvfrom(s, buf, sizeof(buf), 0, (struct sockaddr *)&client, &client_address_size) < 0)
+        if (recvfrom(s, buf, sizeof(buf), 0, (struct sockaddr *)&client, &client_address_size) < 0) //recebe a mensagem do cliente e armazena em buf
         {
             perror("recvfrom()");
             exit(1);
@@ -114,66 +115,39 @@ char **argv;
 	
 
 
-	char path[1035];
-	int return_fread;
-	  /* Open the command for reading. */
-	  fp = popen(buf, "r");
-	  if (fp == NULL) {
+	/* Open the command for reading. */
+	fp = popen(buf, "r");
+	if (fp == NULL) {
 	    printf("Failed to run command\n" );
 	    exit(1);
-	  }
+	}
 
-	  /* Read the output a line at a time - output it. */
-		fread(path, (sizeof(path)+1), 1, fp);
+    fread(resposta, (sizeof(resposta)+1), 1, fp); //le o conteudo apontado por fp e o armazena em resposta
 
-	  /* close */
-	  pclose(fp);
+	/* close */
+	pclose(fp);
 	
 	//usar fread, ver qnt que ele leu
-	printf("\n PRINT PATH ");
-	printf("%s", path);
+	//printf("\n PRINT PATH ");
+	//printf("%s", path);
 	
-
-	int size_sendto;
-        if (1)
-        { //comando1 recebido do cliente
-            //printf("comando clima recebido\n"); //OK
-            if (size_sendto = sendto(s, path, strlen(path) + 1, 0, (struct sockaddr *)&client, sizeof(client)) < 0)
-            {
-                perror("sendto()");
-                exit(1);
-            }
-	printf("\n SIZE SENDTO: %d\n", size_sendto);
-        }
-        else if (strcmp(buf, comando2) == 0)
-        { //comando2 recebido do cliente
-            //printf("comando tempo recebido\n"); //OK
-
-            if (sendto(s, resposta2, strlen(resposta2) + 1, 0, (struct sockaddr *)&client, sizeof(client)) < 0)
-            {
-                perror("sendto()");
-                exit(1);
-            }
-        }
-        else if (strcmp(buf, comandoexit) == 0)
+        if (strcmp(buf, "exit") == 0)
         { //exit recebido do cliente
-            //printf("exit recebido\n"); //OK
+            printf("exit recebido\n"); //OK
             if (sendto(s, respostafinal, strlen(respostafinal) + 1, 0, (struct sockaddr *)&client, sizeof(client)) < 0)
-            {
+            {           
                 perror("sendto()");
                 exit(1);
             }
         }
-        else
-        { //caso o comando nao seja valido
-            //printf("comando desconhecido recebido\n"); //OK
-            if (sendto(s, reserro, strlen(reserro) + 1, 0, (struct sockaddr *)&client, sizeof(client)) < 0)
+        else { //outro comando recebido do cliente
+            if (size_sendto = sendto(s, resposta, strlen(resposta) + 1, 0, (struct sockaddr *)&client, sizeof(client)) < 0)
             {
                 perror("sendto()");
                 exit(1);
             }
-        }
-
+	        printf("\n SIZE SENDTO: %d\n", size_sendto);
+        } 
     } while(1);	//servidor continua sendo executado mesmo apos o cliente ser encerrado.
 
     /*
@@ -181,3 +155,4 @@ char **argv;
     */
     close(s);
 }
+
