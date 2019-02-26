@@ -37,7 +37,7 @@ char **argv;
         exit(1);
     }
 
-    //host byte to network byte
+
     port = atoi(argv[1]); //recebe o numero da porta atraves do parametro dado no terminal
 
     printf("%u\n", port);
@@ -52,17 +52,17 @@ char **argv;
     }
 
     /*
-    * Define a qual endereço IP e porta o servidor estará ligado.
+    * Define a qual endereÃ§o IP e porta o servidor estarÃ¡ ligado.
     * Porta = 0 -> faz com que seja utilizada uma porta qualquer livre.
     * IP = INADDDR_ANY -> faz com que o servidor se ligue em todos
-    * os endereços IP
+    * os endereÃ§os IP
     */
-    server.sin_family = AF_INET;                                          /* Tipo do endereço             */
-    server.sin_port = port; /* Escolhe uma porta disponível */            //para que a mensagem chegue ao servidor, a porta do cliente deve ser a mesma daqui
-    server.sin_addr.s_addr = INADDR_ANY; /* Endereço IP do servidor    */ //INADDR_ANY liga o socket a todos as interfaces (portas) disponiveis INADDR_ANY pode assumir qualquer endereco IP do host
+    server.sin_family = AF_INET;                                          /* Tipo do endereÃ§o             */
+    server.sin_port = port; /* Escolhe uma porta disponÃ­vel */            //para que a mensagem chegue ao servidor, a porta do cliente deve ser a mesma daqui
+    server.sin_addr.s_addr = INADDR_ANY; /* EndereÃ§o IP do servidor    */ //INADDR_ANY liga o socket a todos as interfaces (portas) disponiveis INADDR_ANY pode assumir qualquer endereco IP do host
 
     /*
-    * Liga o servidor á porta definida anteriormente.
+    * Liga o servidor Ã¡ porta definida anteriormente.
     */
     if (bind(s, (struct sockaddr *)&server, sizeof(server)) < 0) //bind designa um nome ao socket cujo IP esta associado ao addr
     {
@@ -93,7 +93,7 @@ char **argv;
 
     /*
     * Recebe uma mensagem do cliente.
-    * O endere�o do cliente ser� armazenado em "client".
+    * O endereï¿½o do cliente serï¿½ armazenado em "client".
     */
     do
     {
@@ -106,7 +106,7 @@ char **argv;
         }
 
         /*
-    * Imprime a mensagem recebida, o endere�o IP do cliente
+    * Imprime a mensagem recebida, o endereï¿½o IP do cliente
     * e a porta do cliente 
     */
         printf("Recebida a mensagem '%s' do endereco IP %s da porta %d\n", buf, inet_ntoa(client.sin_addr), ntohs(client.sin_port));
@@ -148,7 +148,7 @@ char **argv;
             }
         }
 
-    } while (strcmp(buf, "exit") != 0);
+    } while(1);	//servidor continua sendo executado mesmo apos o cliente ser encerrado.
 
     /*
     * Fecha o socket.
