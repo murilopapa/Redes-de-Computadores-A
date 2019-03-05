@@ -96,7 +96,6 @@ char **argv;
     do
     {
         memset(resposta, 0, sizeof(resposta));
-
         client_address_size = sizeof(client);
         if (recvfrom(s, buf, sizeof(buf), 0, (struct sockaddr *)&client, &client_address_size) < 0) //recebe a mensagem do cliente e armazena em buf
         {
@@ -119,7 +118,10 @@ char **argv;
         }
 
         fread(resposta, (sizeof(resposta) + 1), 1, fp); //le o conteudo apontado por fp e o armazena em resposta
-
+        
+        // Adiciona o \0 para enviar exatos 2000 caractéres
+        resposta[1999] = '\0';
+        
         /* close */
         pclose(fp);
 
