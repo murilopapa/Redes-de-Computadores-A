@@ -76,6 +76,10 @@ char **argv;
         }
 
         printf("RETORNO => %d \n", retorno_recv);
+        if (retorno_recv == 1)
+        {
+            strcpy(res, "ERRO: COMANDO NÃO RECONHECIDO!\n\n");
+        }
         printf("resposta do servidor ao comando %s: \n\n%s\n\n", buf, res);
         int namelen = sizeof(client);
 
