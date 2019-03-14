@@ -7,22 +7,30 @@
 /*
  * Servidor TCP
  */
-main(argc, argv)
-int argc;
+main(argc, argv) int argc;
 char **argv;
 {
-    unsigned short port;       
-    char sendbuf[12];              
-    char recvbuf[12];              
-    struct sockaddr_in client; 
-    struct sockaddr_in server; 
-    int s;                     /* Socket para aceitar conexıes       */
-    int ns;                    /* Socket conectado ao cliente        */
-    int namelen;               
+    unsigned short port;
+    char sendbuf[101];
+    char recvbuf[101];
+    struct sockaddr_in client;
+    struct sockaddr_in server;
+    int s;  /* Socket para aceitar conexÔøΩes       */
+    int ns; /* Socket conectado ao cliente        */
+    int namelen;
+
+    int indice = 0;       // variavel para contar a quantidade de mensagens
+    char mensagembuf[80]; // mensagem que recebe na fun√ß√£o
+    char usuariobuf[20];  // usuario que recebe na fun√ß√£o
+
+    char usuarios[10][20];  // 0 a 9 usuarios e o d√©cimo √© /0
+    char mensagens[10][80]; // 0 a 9 mensagens e a d√©cima √© /0
+
+    char mensagem_inteira[101];
 
     /*
-     * O primeiro argumento (argv[1]) È a porta
-     * onde o servidor aguardar· por conexıes
+     * O primeiro argumento (argv[1]) √© a porta
+     * onde o servidor aguardar√° por conex√µes
      */
     if (argc != 2)
     {
@@ -30,10 +38,10 @@ char **argv;
         exit(1);
     }
 
-    port = (unsigned short) atoi(argv[1]);
+    port = (unsigned short)atoi(argv[1]);
 
     /*
-     * Cria um socket TCP (stream) para aguardar conexıes
+     * Cria um socket TCP (stream) para aguardar conexÔøΩes
      */
     if ((s = socket(PF_INET, SOCK_STREAM, 0)) < 0)
     {
@@ -41,37 +49,38 @@ char **argv;
         exit(2);
     }
 
-   /*
-    * Define a qual endereÁo IP e porta o servidor estar· ligado.
+    /*
+    * Define a qual endere√ßo IP e porta o servidor estar√° ligado.
     * IP = INADDDR_ANY -> faz com que o servidor se ligue em todos
-    * os endereÁos IP
+    * os endere√ßos IP
     */
-    server.sin_family = AF_INET;   
-    server.sin_port   = htons(port);       
+    server.sin_family = AF_INET;
+    server.sin_port = htons(port);
     server.sin_addr.s_addr = INADDR_ANY;
 
     /*
-     * Liga o servidor ‡ porta definida anteriormente.
+     * Liga o servidor √† porta definida anteriormente.
      */
     if (bind(s, (struct sockaddr *)&server, sizeof(server)) < 0)
     {
-       perror("Bind()");
-       exit(3);
+        perror("Bind()");
+        exit(3);
     }
 
     /*
-     * Prepara o socket para aguardar por conexıes e
-     * cria uma fila de conexıes pendentes.
+     * Prepara o socket para aguardar por conex√µes e
+     * cria uma fila de conex√µes pendentes.
      */
     if (listen(s, 1) != 0)
     {
         perror("Listen()");
         exit(4);
     }
+    printf("*** Servidor Iniciado! ***\n");
 
     /*
-     * Aceita uma conex„o e cria um novo socket atravÈs do qual
-     * ocorrer· a comunicaÁ„o com o cliente.
+     * Aceita uma conexÔøΩo e cria um novo socket atravÔøΩs do qual
+     * ocorrerÔøΩ a comunicaÔøΩÔøΩo com o cliente.
      */
     namelen = sizeof(client);
     if ((ns = accept(s, (struct sockaddr *)&client, &namelen)) == -1)
@@ -80,32 +89,142 @@ char **argv;
         exit(5);
     }
 
-    /* Recebe uma mensagem do cliente atravÈs do novo socket conectado */
-    if (recv(ns, recvbuf, sizeof(recvbuf), 0) == -1)
+    while (1)
     {
-        perror("Recv()");
-        exit(6);
-    }
-    printf("Mensagem recebida do cliente: %s\n", recvbuf);
+        /* Recebe uma mensagem do cliente atravÔøΩs do novo socket conectado */
+        memset(mensagembuf, 0, sizeof(mensagembuf));
+        memset(usuariobuf, 0, sizeof(usuariobuf));
+        memset(recvbuf, 0, sizeof(recvbuf));
+        memset(sendbuf, 0, sizeof(sendbuf));
 
-    strcpy(sendbuf, "Resposta");
-    
-    /* Envia uma mensagem ao cliente atravÈs do socket conectado */
-    if (send(ns, sendbuf, strlen(sendbuf)+1, 0) < 0)
-    {
-        perror("Send()");
-        exit(7);
-    }
-    printf("Mensagem enviada ao cliente: %s\n", sendbuf);
+        if (recv(ns, recvbuf, sizeof(recvbuf), 0) == -1)
+        {
+            perror("Recvbuf()");
+            exit(6);
+        }
+        printf("\nMensagem recebida do cliente: %s\n", recvbuf);
 
+        // Recebe a primeira mensagem para selecionar a opera√ß√£o
+        if (strcmp(recvbuf, "cad") == 0)
+        {
+            // Cadastrar mensagem
+            if (indice == 10)
+            {
+                strcpy(sendbuf, "Numero maximo de mensagens atingido!");
+                if (send(ns, sendbuf, strlen(sendbuf) + 1, 0) < 0)
+                {
+                    perror("Send()");
+                    exit(7);
+                }
+            }
+            else
+            {
+                if (recv(ns, mensagem_inteira, sizeof(mensagem_inteira), 0) == -1)
+                {
+                    perror("Usuariobuf()");
+                    exit(6);
+                }
+                else
+                {
+                    printf("\nMensagem inteira: %s\n", mensagem_inteira);
+
+                    strcpy(usuarios[indice], strtok(mensagem_inteira, "#"));
+                    strcpy(mensagens[indice], strtok('\0', "$$"));
+
+                    printf("Usuario cadastrado: %s\n", usuarios[indice]);
+                    //strcpy(mensagens[indice], mensagembuf);
+                    printf("Mensagem cadastrada: %s\n", mensagens[indice]);
+                    printf("Indice: %d\n", indice);
+                    indice++;
+
+                    /* Envia uma mensagem ao cliente atrav√©s do socket conectado */
+                    strcpy(sendbuf, "Mensagem cadastrada com sucesso!");
+                    if (send(ns, sendbuf, strlen(sendbuf) + 1, 0) < 0)
+                    {
+                        perror("Send()");
+                        exit(7);
+                    }
+                }
+            }
+            printf("Mensagem enviada ao cliente: %s\n", sendbuf);
+        }
+        if (strcmp(recvbuf, "ler") == 0)
+        {
+            // Ler mensagem
+            char qtd_msg[2];
+            char str1[] = "Mensagens cadastradas: ";
+            sprintf(qtd_msg, "%d", indice);
+            strcat(str1, qtd_msg);
+            strcpy(sendbuf, str1);
+            if (send(ns, sendbuf, strlen(sendbuf) + 1, 0) < 0)
+            {
+                perror("Send()");
+                exit(7);
+            }
+            for (int i = 0; i < indice; i++)
+            {
+
+                strcpy(mensagem_inteira, usuarios[i]);
+                strcat(mensagem_inteira, "#");
+                strcat(mensagem_inteira, mensagens[i]);
+                strcat(mensagem_inteira, "$$");
+                strcpy(sendbuf, mensagem_inteira);
+
+                if (send(ns, sendbuf, strlen(sendbuf) + 1, 0) < 0)
+                {
+                    perror("Send()");
+                    exit(7);
+                }
+                if (recv(ns, mensagem_inteira, sizeof(mensagem_inteira), 0) == -1)
+                {
+                    perror("Usuariobuf()");
+                    exit(6);
+                }
+
+                //receber msg confirma√ß√£o do cliente
+            }
+        }
+        if (strcmp(recvbuf, "apa") == 0)
+        {
+            // Apaga mensagem
+            char nome[20];
+            if (recv(ns, recvbuf, sizeof(recvbuf), 0) == -1)
+            {
+                perror("Recvbuf()");
+                exit(6);
+            }
+            strcpy(nome, recvbuf);
+            strcpy(sendbuf, "Usuario nao encontrado!\n");
+            for (int i = 0; i < indice; i++)
+            {
+                printf("Nome: %d\n", i);
+                if (strcmp(nome, usuarios[i]) == 0)
+                {
+                    printf("Nome %d localizado\n", i);
+                    for (int j = i; j < indice; j++)
+                    {
+                        printf("Usuario %d recebe usuario %d\n", j, j + 1);
+                        strcpy(usuarios[j], usuarios[j + 1]);
+                        strcpy(mensagens[j], mensagens[j + 1]);
+                    }
+                    indice--;
+                    printf("Indice: %d\nI: %d\n", indice, i);
+                    strcpy(sendbuf, "Usuario e mensagem apagado com sucesso!\n");
+                }
+            }
+            if (send(ns, sendbuf, strlen(sendbuf) + 1, 0) < 0)
+            {
+                perror("Send()");
+                exit(7);
+            }
+        }
+    }
     /* Fecha o socket conectado ao cliente */
     close(ns);
 
-    /* Fecha o socket aguardando por conexıes */
+    /* Fecha o socket aguardando por conexÔøΩes */
     close(s);
 
     printf("Servidor terminou com sucesso.\n");
     exit(0);
 }
-
-
