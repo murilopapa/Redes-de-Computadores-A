@@ -128,7 +128,7 @@ char **argv;
 				exit(6);
 			} //recebe a resposta do servidor
 			printf("Servidor: %s\n", recvbuf);
-			quantidade++;
+			
 			break;
 
 		case 2:
@@ -149,6 +149,12 @@ char **argv;
 			} //recebe o numero de mensagens cadastradas
 			printf("\n%s\n", recvbuf);
 			//talvez tenhamos que converter quantidade para int (char)
+
+			char indice_recebido[2];
+			strcpy(indice_recebido, recvbuf);
+			quantidade = atoi(indice_recebido);
+			printf("QUANTIDADE: %d\n", quantidade);
+
 
 			for (int i = 0; i < quantidade; i++)
 			{
@@ -202,7 +208,7 @@ char **argv;
 			} //recebe a resposta do servidor
 			if (strcmp(recvbuf, "Usuario e mensagem apagado com sucesso!\n") == 0)
 			{
-				quantidade--;
+				
 			}
 			printf("\n%s\n", recvbuf);
 
@@ -210,6 +216,15 @@ char **argv;
 
 		case 4: //sair
 			printf("Obrigado por utilizar a aplicacao\n");
+
+			strcpy(operacao, "out");
+
+			if (send(s, operacao, strlen(operacao) + 1, 0) < 0)
+			{
+				perror("Send()");
+				exit(5);
+			} //informa ao servidor qual operacao sera feita
+
 			break;
 
 		default:

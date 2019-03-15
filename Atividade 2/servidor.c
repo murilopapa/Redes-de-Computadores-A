@@ -152,10 +152,9 @@ char **argv;
         {
             // Ler mensagem
             char qtd_msg[2];
-            char str1[] = "Mensagens cadastradas: ";
             sprintf(qtd_msg, "%d", indice);
-            strcat(str1, qtd_msg);
-            strcpy(sendbuf, str1);
+            strcpy(sendbuf, qtd_msg);
+            printf("SENDBUF: %s\n", sendbuf);
             if (send(ns, sendbuf, strlen(sendbuf) + 1, 0) < 0)
             {
                 perror("Send()");
@@ -163,7 +162,7 @@ char **argv;
             }
             for (int i = 0; i < indice; i++)
             {
-
+                memset(sendbuf, 0, sizeof(sendbuf));
                 strcpy(mensagem_inteira, usuarios[i]);
                 strcat(mensagem_inteira, "#");
                 strcat(mensagem_inteira, mensagens[i]);
@@ -216,6 +215,16 @@ char **argv;
             {
                 perror("Send()");
                 exit(7);
+            }
+        }
+        if (strcmp(recvbuf, "out") == 0)
+        {
+            close(ns);
+            namelen = sizeof(client);
+            if ((ns = accept(s, (struct sockaddr *)&client, &namelen)) == -1)
+            {
+                perror("Accept()");
+                exit(5);
             }
         }
     }
