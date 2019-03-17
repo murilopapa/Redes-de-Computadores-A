@@ -1,3 +1,9 @@
+// Ettore Biazon Baccan         16000465
+// Mateus Henrique Zorzi        16100661
+// Matheus Martins Pupo         16145559
+// Murilo Martos Mendonçca      16063497
+// Victor Hugo do Nascimento    16100588
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
