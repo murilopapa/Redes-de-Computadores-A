@@ -237,7 +237,7 @@ char **argv;
                         perror("Send()");
                         exit(7);
                     }
-                    
+                    lockSemaphore(semaphore_id_A);
                     for (int i = 0; i < shared_mem_address->indice; i++)
                     {
                         memset(sendbuf, 0, sizeof(sendbuf));
@@ -260,7 +260,7 @@ char **argv;
 
                         //receber msg confirmação do cliente
                     }
-                    
+                    unlockSemaphore(semaphore_id_A);
                 }
                 if (strcmp(recvbuf, "apa") == 0)
                 {
