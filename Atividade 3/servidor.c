@@ -15,10 +15,10 @@
 #include <sys/sem.h>
 
 #define TRUE 1
-#define SHM_KEY 9022
+#define SHM_KEY 9024
 #define MESSAGE_MTYPE 1
 #define SEM_PERMS 0666
-#define SEM_KEY_A 9032
+#define SEM_KEY_A 9034
 
 void createIntSharedMemory(int *shared_mem_id, int shared_mem_key, int **shared_mem_address);
 void createSemaphore(int *semaphore_id, int semaphore_key);

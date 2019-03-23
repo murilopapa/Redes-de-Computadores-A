@@ -210,8 +210,9 @@ char **argv;
 			strcpy(msg_apagadas, recvbuf);
 
 			printf("\nMensagens apagadas: %s\n", recvbuf);
-
-			for (int i = 0; i < msg_apagadas; i++)
+			int z;
+			z = atoi(msg_apagadas);
+			for (int i = 0; i < z; i++)
 			{
 				//recebe o nome e imprime
 				if (recv(s, envio, sizeof(envio), 0) < 0)
