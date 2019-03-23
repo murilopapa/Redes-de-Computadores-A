@@ -15,10 +15,10 @@
 #include <sys/sem.h>
 
 #define TRUE 1
-#define SHM_KEY 9013
+#define SHM_KEY 9022
 #define MESSAGE_MTYPE 1
 #define SEM_PERMS 0666
-#define SEM_KEY_A 9020
+#define SEM_KEY_A 9032
 
 void createIntSharedMemory(int *shared_mem_id, int shared_mem_key, int **shared_mem_address);
 void createSemaphore(int *semaphore_id, int semaphore_key);
@@ -75,9 +75,6 @@ char **argv;
     semaphore_unlock_op[0].sem_num = 0;
     semaphore_unlock_op[0].sem_op = 1;
     semaphore_unlock_op[0].sem_flg = 0;
-
-    //removeSharedMemory(&shared_mem_id);
-    //removeSemaphore(semaphore_id_A);
 
     createSemaphore(&semaphore_id_A, SEM_KEY_A);
     createIntSharedMemory(&shared_mem_id, SHM_KEY, &shared_mem_address);
@@ -227,9 +224,9 @@ char **argv;
                 {
                     // Ler mensagem
                     char qtd_msg[2];
-                    
+
                     sprintf(qtd_msg, "%d", shared_mem_address->indice);
-                    
+
                     strcpy(sendbuf, qtd_msg);
                     printf("[%d] SENDBUF: %s\n", fid, sendbuf);
                     if (send(ns, sendbuf, strlen(sendbuf) + 1, 0) < 0)
@@ -238,8 +235,10 @@ char **argv;
                         exit(7);
                     }
                     lockSemaphore(semaphore_id_A);
+
                     for (int i = 0; i < shared_mem_address->indice; i++)
                     {
+                        sleep(1);
                         memset(sendbuf, 0, sizeof(sendbuf));
                         strcpy(mensagem_inteira, shared_mem_address->usuarios[i]);
                         strcat(mensagem_inteira, "#");
@@ -251,11 +250,6 @@ char **argv;
                         {
                             perror("Send()");
                             exit(7);
-                        }
-                        if (recv(ns, mensagem_inteira, sizeof(mensagem_inteira), 0) == -1)
-                        {
-                            perror("Usuariobuf()");
-                            exit(6);
                         }
 
                         //receber msg confirmação do cliente
@@ -273,6 +267,58 @@ char **argv;
                     }
                     strcpy(nome, recvbuf);
                     strcpy(sendbuf, "Usuario nao encontrado!\n");
+
+                    // MOSTRAR MENSAGENS APAGADAS
+
+                    int msg_apagadas = 0;
+                    char k[2];
+
+                    lockSemaphore(semaphore_id_A);
+
+                    for (int i = 0; i < shared_mem_address->indice; i++)
+                    {
+                        printf("[%d] Nome: %d\n", fid, i);
+                        if (strcmp(nome, shared_mem_address->usuarios[i]) == 0)
+                        {
+                            msg_apagadas++;
+                        }
+                    }
+                    unlockSemaphore(semaphore_id_A);
+                    sprintf(k, "%d", msg_apagadas);
+                    strcpy(sendbuf, k);
+
+                    printf("[%d] SENDBUF: %s\n", fid, sendbuf);
+                    if (send(ns, sendbuf, strlen(sendbuf) + 1, 0) < 0)
+                    {
+                        perror("Send()");
+                        exit(7);
+                    }
+                    lockSemaphore(semaphore_id_A);
+
+                    for (int i = 0; i < shared_mem_address->indice; i++)
+                    {
+                        if (strcmp(nome, shared_mem_address->usuarios[i]) == 0)
+                        {
+                            sleep(1);
+                            memset(sendbuf, 0, sizeof(sendbuf));
+                            strcpy(mensagem_inteira, shared_mem_address->usuarios[i]);
+                            strcat(mensagem_inteira, "#");
+                            strcat(mensagem_inteira, shared_mem_address->mensagens[i]);
+                            strcat(mensagem_inteira, "$$");
+                            strcpy(sendbuf, mensagem_inteira);
+
+                            if (send(ns, sendbuf, strlen(sendbuf) + 1, 0) < 0)
+                            {
+                                perror("Send()");
+                                exit(7);
+                            }
+                        }
+                        //receber msg confirmação do cliente
+                    }
+                    unlockSemaphore(semaphore_id_A);
+
+                    // FIM MOSTRAR MENSAGENS APAGADAS
+
                     lockSemaphore(semaphore_id_A);
                     for (int i = 0; i < shared_mem_address->indice; i++)
                     {
@@ -288,15 +334,14 @@ char **argv;
                             }
                             shared_mem_address->indice--;
                             printf("[%d] Indice: %d\nI: %d\n", fid, shared_mem_address->indice, i);
-                            strcpy(sendbuf, "Usuario e mensagem apagado com sucesso!\n");
                         }
                     }
-                    unlockSemaphore(semaphore_id_A);
+                    unlockSemaphore(semaphore_id_A);/*
                     if (send(ns, sendbuf, strlen(sendbuf) + 1, 0) < 0)
                     {
                         perror("Send()");
                         exit(7);
-                    }
+                    }*/
                 }
                 if (strcmp(recvbuf, "out") == 0)
                 {
@@ -304,6 +349,14 @@ char **argv;
 
                     /* Processo filho termina sua execu��o */
                     printf("[%d] Processo filho terminado com sucesso.\n", fid);
+                    exit(0);
+                }
+                if (strcmp(recvbuf, "stp") == 0)
+                {
+
+                    printf("Processo servidor encerrado por:[%d]\n", fid);
+                    removeSharedMemory(&shared_mem_id);
+                    removeSemaphore(semaphore_id_A);
                     exit(0);
                 }
             }

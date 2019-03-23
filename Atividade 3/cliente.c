@@ -134,7 +134,7 @@ char **argv;
 				exit(6);
 			} //recebe a resposta do servidor
 			printf("Servidor: %s\n", recvbuf);
-			
+
 			break;
 
 		case 2:
@@ -161,7 +161,6 @@ char **argv;
 			quantidade = atoi(indice_recebido);
 			printf("QUANTIDADE: %d\n", quantidade);
 
-
 			for (int i = 0; i < quantidade; i++)
 			{
 				//recebe o nome e imprime
@@ -169,12 +168,6 @@ char **argv;
 				{
 					perror("Nome()");
 					exit(6);
-				}
-
-				if (send(s, "OK", 3, 0) < 0)
-				{
-					perror("Send()");
-					exit(5);
 				}
 
 				strcpy(nome, strtok(envio, "#"));
@@ -212,12 +205,27 @@ char **argv;
 				perror("Recv()");
 				exit(6);
 			} //recebe a resposta do servidor
-			if (strcmp(recvbuf, "Usuario e mensagem apagado com sucesso!\n") == 0)
-			{
-				
-			}
-			printf("\n%s\n", recvbuf);
+			char msg_apagadas[2];
 
+			strcpy(msg_apagadas, recvbuf);
+
+			printf("\nMensagens apagadas: %s\n", recvbuf);
+
+			for (int i = 0; i < msg_apagadas; i++)
+			{
+				//recebe o nome e imprime
+				if (recv(s, envio, sizeof(envio), 0) < 0)
+				{
+					perror("Nome()");
+					exit(6);
+				}
+
+				strcpy(nome, strtok(envio, "#"));
+				strcpy(mensagem, strtok('\0', "$$"));
+
+				printf("Usuario: %s", nome);
+				printf("\t\tMensagem: %s\n", mensagem);
+			}
 			break;
 
 		case 4: //sair
@@ -233,12 +241,23 @@ char **argv;
 
 			break;
 
+		case 9:
+			printf("Comando secreto para encerrar servidor\n");
+
+			strcpy(operacao, "stp");
+
+			if (send(s, operacao, strlen(operacao) + 1, 0) < 0)
+			{
+				perror("Send()");
+				exit(5);
+			} //informa ao servidor qual operacao sera feita
+			break;
 		default:
 			printf("Opcao invalida!\n");
 			break;
 		}
 
-	} while (op != 4);
+	} while ((op != 4) || (op != 9));
 
 	/* Fecha o socket */
 	close(s);
