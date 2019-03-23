@@ -15,7 +15,7 @@
 #include <sys/sem.h>
 
 #define TRUE 1
-#define SHM_KEY 9013
+#define SHM_KEY 9010
 #define MESSAGE_MTYPE 1
 #define SEM_PERMS 0666
 #define SEM_KEY_A 9020
@@ -75,9 +75,6 @@ char **argv;
     semaphore_unlock_op[0].sem_num = 0;
     semaphore_unlock_op[0].sem_op = 1;
     semaphore_unlock_op[0].sem_flg = 0;
-
-    //removeSharedMemory(&shared_mem_id);
-    //removeSemaphore(semaphore_id_A);
 
     createSemaphore(&semaphore_id_A, SEM_KEY_A);
     createIntSharedMemory(&shared_mem_id, SHM_KEY, &shared_mem_address);
@@ -227,9 +224,9 @@ char **argv;
                 {
                     // Ler mensagem
                     char qtd_msg[2];
-                    
+
                     sprintf(qtd_msg, "%d", shared_mem_address->indice);
-                    
+
                     strcpy(sendbuf, qtd_msg);
                     printf("[%d] SENDBUF: %s\n", fid, sendbuf);
                     if (send(ns, sendbuf, strlen(sendbuf) + 1, 0) < 0)
@@ -237,9 +234,10 @@ char **argv;
                         perror("Send()");
                         exit(7);
                     }
-                    
+
                     for (int i = 0; i < shared_mem_address->indice; i++)
                     {
+                        sleep(1);
                         memset(sendbuf, 0, sizeof(sendbuf));
                         strcpy(mensagem_inteira, shared_mem_address->usuarios[i]);
                         strcat(mensagem_inteira, "#");
@@ -252,15 +250,9 @@ char **argv;
                             perror("Send()");
                             exit(7);
                         }
-                        if (recv(ns, mensagem_inteira, sizeof(mensagem_inteira), 0) == -1)
-                        {
-                            perror("Usuariobuf()");
-                            exit(6);
-                        }
 
                         //receber msg confirmação do cliente
                     }
-                    
                 }
                 if (strcmp(recvbuf, "apa") == 0)
                 {
@@ -304,6 +296,14 @@ char **argv;
 
                     /* Processo filho termina sua execu��o */
                     printf("[%d] Processo filho terminado com sucesso.\n", fid);
+                    exit(0);
+                }
+                if (strcmp(recvbuf, "stp") == 0)
+                {
+
+                    printf("Processo servidor encerrado por:[%d]\n", fid);
+                    removeSharedMemory(&shared_mem_id);
+                    removeSemaphore(semaphore_id_A);
                     exit(0);
                 }
             }
