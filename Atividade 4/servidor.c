@@ -15,26 +15,30 @@
 /*
  * Servidor TCP
  */
+//variaveis globais
+pthread_t servidores[50];
+int count_servers = 0;
+unsigned short port;
+char sendbuf[101];
+char recvbuf[101];
+struct sockaddr_in client;
+struct sockaddr_in server;
+int s;  /* Socket para aceitar conex�es       */
+int ns; /* Socket conectado ao cliente        */
+int namelen;
+
+int indice = 0;       // variavel para contar a quantidade de mensagens
+char mensagembuf[80]; // mensagem que recebe na função
+char usuariobuf[20];  // usuario que recebe na função
+
+char usuarios[10][20];  // 0 a 9 usuarios e o décimo é /0
+char mensagens[10][80]; // 0 a 9 mensagens e a décima é /0
+
+char mensagem_inteira[101];
+
 main(argc, argv) int argc;
 char **argv;
 {
-    unsigned short port;
-    char sendbuf[101];
-    char recvbuf[101];
-    struct sockaddr_in client;
-    struct sockaddr_in server;
-    int s;  /* Socket para aceitar conex�es       */
-    int ns; /* Socket conectado ao cliente        */
-    int namelen;
-
-    int indice = 0;       // variavel para contar a quantidade de mensagens
-    char mensagembuf[80]; // mensagem que recebe na função
-    char usuariobuf[20];  // usuario que recebe na função
-
-    char usuarios[10][20];  // 0 a 9 usuarios e o décimo é /0
-    char mensagens[10][80]; // 0 a 9 mensagens e a décima é /0
-
-    char mensagem_inteira[101];
 
     /*
      * O primeiro argumento (argv[1]) é a porta
@@ -90,13 +94,36 @@ char **argv;
      * Aceita uma conex�o e cria um novo socket atrav�s do qual
      * ocorrer� a comunica��o com o cliente.
      */
-    namelen = sizeof(client);
-    if ((ns = accept(s, (struct sockaddr *)&client, &namelen)) == -1)
-    {
-        perror("Accept()");
-        exit(5);
-    }
 
+    while (1)
+    {
+        namelen = sizeof(client);
+        if ((ns = accept(s, (struct sockaddr *)&client, &namelen)) == -1)
+        {
+            perror("Accept()");
+            exit(5);
+        }
+        if (pthread_create(&servidores[count_servers], NULL, servidor, (void *)count_servers + 1))
+        {
+            printf("ERRO: impossivel criar um thread consumidor\n");
+            exit(-1);
+        }
+        //criar a thread aqui
+    }
+    /* Fecha o socket conectado ao cliente */
+    close(ns);
+
+    /* Fecha o socket aguardando por conex�es */
+    close(s);
+
+    printf("Servidor terminou com sucesso.\n");
+    exit(0);
+}
+
+void *servidor()
+{
+
+    close(s);
     while (1)
     {
         /* Recebe uma mensagem do cliente atrav�s do novo socket conectado */
@@ -236,12 +263,4 @@ char **argv;
             }
         }
     }
-    /* Fecha o socket conectado ao cliente */
-    close(ns);
-
-    /* Fecha o socket aguardando por conex�es */
-    close(s);
-
-    printf("Servidor terminou com sucesso.\n");
-    exit(0);
 }
