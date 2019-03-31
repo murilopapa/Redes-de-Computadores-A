@@ -29,3 +29,14 @@ ainda falando sobre as variaveis, eu acho que deveriam ser globais, pq algumas s
 na funcao main, e devem ser usadas na funcao servidor, ai ou passa tudo por parametro, ou
 usa variavel global, se leu ate aqui, pega no meu pau
 
+https://github.com/rogerluan/SO-A/blob/master/experimento4/exp4.c
+
+
+
+
+
+--
+o que falta (em teoira, rs)
+- fechar a thread sem fechar o server
+- colocar os semaforos
+- pthread_t servidores[50]; <- ver pra que serve

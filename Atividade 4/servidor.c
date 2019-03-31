@@ -98,6 +98,7 @@ char **argv;
             perror("Accept()");
             exit(5);
         }
+
         if (pthread_create(&servidores[count_servers], NULL, servidor, (void *)ns))
         {
             printf("ERRO: impossivel criar um thread consumidor\n");
@@ -254,8 +255,7 @@ void *servidor(int ns)
         }
         if (strcmp(recvbuf, "out") == 0)
         {
-            close(ns);
-            exit(6);
+            pthread_exit(NULL);
         }
     }
 }
