@@ -12,33 +12,28 @@
 #include <string.h>
 #include <pthread.h>
 
+//prototipos
+void *servidor(int ns);
+
+//variaveis globais, compartilhadas pelas threads
+pthread_t servidores[50];
+char usuarios[10][20];  // 0 a 9 usuarios e o décimo é /0
+char mensagens[10][80]; // 0 a 9 mensagens e a décima é /0
+int indice = 0;         // variavel para contar a quantidade de mensagens
+int count_servers = 0;
 /*
  * Servidor TCP
  */
-//variaveis globais
-pthread_t servidores[50];
-int count_servers = 0;
-unsigned short port;
-char sendbuf[101];
-char recvbuf[101];
-struct sockaddr_in client;
-struct sockaddr_in server;
-int s;  /* Socket para aceitar conex�es       */
-int ns; /* Socket conectado ao cliente        */
-int namelen;
-
-int indice = 0;       // variavel para contar a quantidade de mensagens
-char mensagembuf[80]; // mensagem que recebe na função
-char usuariobuf[20];  // usuario que recebe na função
-
-char usuarios[10][20];  // 0 a 9 usuarios e o décimo é /0
-char mensagens[10][80]; // 0 a 9 mensagens e a décima é /0
-
-char mensagem_inteira[101];
-
 main(argc, argv) int argc;
 char **argv;
 {
+    unsigned short port;
+
+    struct sockaddr_in client;
+    struct sockaddr_in server;
+    int s;  /* Socket para aceitar conex�es       */
+    int ns; /* Socket conectado ao cliente        */
+    int namelen;
 
     /*
      * O primeiro argumento (argv[1]) é a porta
@@ -103,16 +98,15 @@ char **argv;
             perror("Accept()");
             exit(5);
         }
-        if (pthread_create(&servidores[count_servers], NULL, servidor, (void *)count_servers + 1))
+        if (pthread_create(&servidores[count_servers], NULL, servidor, (void *)ns))
         {
             printf("ERRO: impossivel criar um thread consumidor\n");
             exit(-1);
         }
-        //criar a thread aqui
+        count_servers++;
     }
     /* Fecha o socket conectado ao cliente */
     close(ns);
-
     /* Fecha o socket aguardando por conex�es */
     close(s);
 
@@ -120,10 +114,16 @@ char **argv;
     exit(0);
 }
 
-void *servidor()
+void *servidor(int ns)
 {
+    char sendbuf[101];
+    char recvbuf[101];
+    char mensagembuf[80]; // mensagem que recebe na função
+    char usuariobuf[20];  // usuario que recebe na função
+    char mensagem_inteira[101];
+    int id_this_thread = count_servers; //no momento que a função é chamada, recebe o count pra saber qual o "id" dela
 
-    close(s);
+    printf("\n[%d] Thread criada com sucesso\n", id_this_thread);
     while (1)
     {
         /* Recebe uma mensagem do cliente atrav�s do novo socket conectado */
@@ -137,7 +137,7 @@ void *servidor()
             perror("Recvbuf()");
             exit(6);
         }
-        printf("\nMensagem recebida do cliente: %s\n", recvbuf);
+        printf("\n[%d] Mensagem recebida do cliente: %s\n", id_this_thread, recvbuf);
 
         // Recebe a primeira mensagem para selecionar a operação
         if (strcmp(recvbuf, "cad") == 0)
@@ -161,15 +161,15 @@ void *servidor()
                 }
                 else
                 {
-                    printf("\nMensagem inteira: %s\n", mensagem_inteira);
+                    printf("\n[%d] Mensagem inteira: %s\n", id_this_thread, mensagem_inteira);
 
                     strcpy(usuarios[indice], strtok(mensagem_inteira, "#"));
                     strcpy(mensagens[indice], strtok('\0', "$$"));
 
-                    printf("Usuario cadastrado: %s\n", usuarios[indice]);
+                    printf("[%d] Usuario cadastrado: %s\n", id_this_thread, usuarios[indice]);
                     //strcpy(mensagens[indice], mensagembuf);
-                    printf("Mensagem cadastrada: %s\n", mensagens[indice]);
-                    printf("Indice: %d\n", indice);
+                    printf("[%d] Mensagem cadastrada: %s\n", id_this_thread, mensagens[indice]);
+                    printf("[%d] Indice: %d\n", id_this_thread, indice);
                     indice++;
 
                     /* Envia uma mensagem ao cliente através do socket conectado */
@@ -181,7 +181,7 @@ void *servidor()
                     }
                 }
             }
-            printf("Mensagem enviada ao cliente: %s\n", sendbuf);
+            printf("[%d] Mensagem enviada ao cliente: %s\n", id_this_thread, sendbuf);
         }
         if (strcmp(recvbuf, "ler") == 0)
         {
@@ -189,7 +189,7 @@ void *servidor()
             char qtd_msg[2];
             sprintf(qtd_msg, "%d", indice);
             strcpy(sendbuf, qtd_msg);
-            printf("SENDBUF: %s\n", sendbuf);
+            printf("[%d] SENDBUF: %s\n", id_this_thread, sendbuf);
             if (send(ns, sendbuf, strlen(sendbuf) + 1, 0) < 0)
             {
                 perror("Send()");
@@ -231,18 +231,18 @@ void *servidor()
             strcpy(sendbuf, "Usuario nao encontrado!\n");
             for (int i = 0; i < indice; i++)
             {
-                printf("Nome: %d\n", i);
+                printf("[%d] Nome: %d\n", id_this_thread, i);
                 if (strcmp(nome, usuarios[i]) == 0)
                 {
-                    printf("Nome %d localizado\n", i);
+                    printf("[%d] Nome %d localizado\n", id_this_thread, i);
                     for (int j = i; j < indice; j++)
                     {
-                        printf("Usuario %d recebe usuario %d\n", j, j + 1);
+                        printf("[%d] Usuario %d recebe usuario %d\n", id_this_thread, j, j + 1);
                         strcpy(usuarios[j], usuarios[j + 1]);
                         strcpy(mensagens[j], mensagens[j + 1]);
                     }
                     indice--;
-                    printf("Indice: %d\nI: %d\n", indice, i);
+                    printf("[%d] Indice: %d\nI: %d\n", id_this_thread, indice, i);
                     strcpy(sendbuf, "Usuario e mensagem apagado com sucesso!\n");
                 }
             }
@@ -255,12 +255,7 @@ void *servidor()
         if (strcmp(recvbuf, "out") == 0)
         {
             close(ns);
-            namelen = sizeof(client);
-            if ((ns = accept(s, (struct sockaddr *)&client, &namelen)) == -1)
-            {
-                perror("Accept()");
-                exit(5);
-            }
+            exit(6);
         }
     }
 }
