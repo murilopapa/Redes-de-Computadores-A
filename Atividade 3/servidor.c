@@ -1,3 +1,9 @@
+// Ettore Biazon Baccan         16000465
+// Mateus Henrique Zorzi        16100661
+// Matheus Martins Pupo         16145559
+// Murilo Martos Mendonçca      16063497
+// Victor Hugo do Nascimento    16100588
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -15,10 +21,17 @@
 #include <sys/sem.h>
 
 #define TRUE 1
+<<<<<<< HEAD
 #define SHM_KEY 9024
 #define MESSAGE_MTYPE 1
 #define SEM_PERMS 0666
 #define SEM_KEY_A 9034
+=======
+#define SHM_KEY 9025
+#define MESSAGE_MTYPE 1
+#define SEM_PERMS 0666
+#define SEM_KEY_A 9035
+>>>>>>> master
 
 void createIntSharedMemory(int *shared_mem_id, int shared_mem_key, int **shared_mem_address);
 void createSemaphore(int *semaphore_id, int semaphore_key);
