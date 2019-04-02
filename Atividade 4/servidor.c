@@ -107,10 +107,6 @@ char **argv;
         }
         count_servers++;
     }
-    /* Fecha o socket conectado ao cliente */
-    close(ns);
-    /* Fecha o socket aguardando por conex�es */
-    close(s);
 
     printf("Servidor terminou com sucesso.\n");
     exit(0);
@@ -133,11 +129,18 @@ void *servidor(int ns)
         memset(usuariobuf, 0, sizeof(usuariobuf));
         memset(recvbuf, 0, sizeof(recvbuf));
         memset(sendbuf, 0, sizeof(sendbuf));
-
-        if (recv(ns, recvbuf, sizeof(recvbuf), 0) == -1)
+        int retorno;
+        retorno = recv(ns, recvbuf, sizeof(recvbuf), 0);
+        if (retorno == -1)
         {
             perror("Recvbuf()");
-            exit(6);
+            close(ns);
+            pthread_exit(NULL);
+        }
+        if (retorno == 0)
+        {
+            close(ns);
+            pthread_exit(NULL);
         }
         printf("\n[%d] Mensagem recebida do cliente: %s\n", id_this_thread, recvbuf);
 
@@ -156,10 +159,17 @@ void *servidor(int ns)
             }
             else
             {
-                if (recv(ns, mensagem_inteira, sizeof(mensagem_inteira), 0) == -1)
+                retorno = recv(ns, recvbuf, sizeof(recvbuf), 0);
+                if (retorno == -1)
                 {
-                    perror("Usuariobuf()");
-                    exit(6);
+                    perror("Recvbuf()");
+                    close(ns);
+                    pthread_exit(NULL);
+                }
+                if (retorno == 0)
+                {
+                    close(ns);
+                    pthread_exit(NULL);
                 }
                 else
                 {
@@ -213,10 +223,17 @@ void *servidor(int ns)
                     perror("Send()");
                     exit(7);
                 }
-                if (recv(ns, mensagem_inteira, sizeof(mensagem_inteira), 0) == -1)
+                retorno = recv(ns, recvbuf, sizeof(recvbuf), 0);
+                if (retorno == -1)
                 {
-                    perror("Usuariobuf()");
-                    exit(6);
+                    perror("Recvbuf()");
+                    close(ns);
+                    pthread_exit(NULL);
+                }
+                if (retorno == 0)
+                {
+                    close(ns);
+                    pthread_exit(NULL);
                 }
 
                 //receber msg confirmação do cliente
@@ -227,10 +244,17 @@ void *servidor(int ns)
         {
             // Apaga mensagem
             char nome[20];
-            if (recv(ns, recvbuf, sizeof(recvbuf), 0) == -1)
+            retorno = recv(ns, recvbuf, sizeof(recvbuf), 0);
+            if (retorno == -1)
             {
                 perror("Recvbuf()");
-                exit(6);
+                close(ns);
+                pthread_exit(NULL);
+            }
+            if (retorno == 0)
+            {
+                close(ns);
+                pthread_exit(NULL);
             }
             strcpy(nome, recvbuf);
             strcpy(sendbuf, "Usuario nao encontrado!\n");
@@ -337,9 +361,10 @@ void *servidor(int ns)
             perror("Send()");
             exit(7);
         }*/
-    }
-    if (strcmp(recvbuf, "out") == 0)
-    {
-        pthread_exit(NULL);
+        if (strcmp(recvbuf, "out") == 0)
+        {
+            close(ns);
+            pthread_exit(NULL);
+        }
     }
 }
