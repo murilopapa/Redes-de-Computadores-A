@@ -154,6 +154,11 @@ char **argv;
                 exit(6);
             } //recebe o numero de mensagens cadastradas
             //talvez tenhamos que converter quantidade para int (char)
+            if (send(s, "OK", 3, 0) < 0)
+            {
+                perror("Send()");
+                exit(5);
+            }
 
             char indice_recebido[2];
             strcpy(indice_recebido, recvbuf);
@@ -163,12 +168,12 @@ char **argv;
             for (int i = 0; i < quantidade; i++)
             {
                 //recebe o nome e imprime
+
                 if (recv(s, envio, sizeof(envio), 0) < 0)
                 {
                     perror("Nome()");
                     exit(6);
                 }
-
                 if (send(s, "OK", 3, 0) < 0)
                 {
                     perror("Send()");
@@ -210,6 +215,11 @@ char **argv;
                 perror("Recv()");
                 exit(6);
             } //recebe a resposta do servidor
+            if (send(s, "OK", 3, 0) < 0)
+            {
+                perror("Send()");
+                exit(5);
+            }
             char msg_apagadas[2];
 
             strcpy(msg_apagadas, recvbuf);

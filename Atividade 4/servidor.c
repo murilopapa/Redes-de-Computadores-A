@@ -16,7 +16,7 @@
 void *servidor(int ns);
 
 //variaveis globais, compartilhadas pelas threads
-pthread_t servidores[50];
+pthread_t thread_id;
 char usuarios[10][20];  // 0 a 9 usuarios e o décimo é /0
 char mensagens[10][80]; // 0 a 9 mensagens e a décima é /0
 int indice = 0;         // variavel para contar a quantidade de mensagens
@@ -100,12 +100,13 @@ char **argv;
             exit(5);
         }
 
-        if (pthread_create(&servidores[count_servers], NULL, servidor, (void *)ns))
+        if (pthread_create(&thread_id, NULL, servidor, (void *)ns))
         {
-            printf("ERRO: impossivel criar um thread consumidor\n");
+            printf("ERRO: impossivel criar uma thread\n");
             exit(-1);
         }
         count_servers++;
+        pthread_detach(thread_id);
     }
 
     printf("Servidor terminou com sucesso.\n");
@@ -129,19 +130,22 @@ void *servidor(int ns)
         memset(usuariobuf, 0, sizeof(usuariobuf));
         memset(recvbuf, 0, sizeof(recvbuf));
         memset(sendbuf, 0, sizeof(sendbuf));
+
         int retorno;
-        retorno = recv(ns, recvbuf, sizeof(recvbuf), 0);
+        retorno = recv(ns, recvbuf, sizeof(recvbuf), 0); //recece a mensagem do cliente e verifica o valor de retorno
         if (retorno == -1)
         {
             perror("Recvbuf()");
             close(ns);
             pthread_exit(NULL);
         }
-        if (retorno == 0)
+        else if (retorno == 0)
         {
+            printf("thread encerrada pois o cliente foi fechado num momento inesperado\n");
             close(ns);
             pthread_exit(NULL);
         }
+        retorno = 0;
         printf("\n[%d] Mensagem recebida do cliente: %s\n", id_this_thread, recvbuf);
 
         // Recebe a primeira mensagem para selecionar a operação
@@ -159,15 +163,17 @@ void *servidor(int ns)
             }
             else
             {
-                retorno = recv(ns, recvbuf, sizeof(recvbuf), 0);
+                retorno = recv(ns, mensagem_inteira, sizeof(recvbuf), 0); //recece a mensagem do cliente e verifica o valor de retorno
+                printf("retorno: %d\n", retorno);
                 if (retorno == -1)
                 {
                     perror("Recvbuf()");
                     close(ns);
                     pthread_exit(NULL);
                 }
-                if (retorno == 0)
+                else if (retorno == 0)
                 {
+                    printf("thread encerrada pois o cliente foi fechado num momento inesperado\n");
                     close(ns);
                     pthread_exit(NULL);
                 }
@@ -195,22 +201,38 @@ void *servidor(int ns)
             }
             printf("[%d] Mensagem enviada ao cliente: %s\n", id_this_thread, sendbuf);
         }
-        if (strcmp(recvbuf, "ler") == 0)
+        else if (strcmp(recvbuf, "ler") == 0)
         {
             // Ler mensagem
             char qtd_msg[2];
             sprintf(qtd_msg, "%d", indice);
             strcpy(sendbuf, qtd_msg);
             printf("[%d] SENDBUF: %s\n", id_this_thread, sendbuf);
+
+            pthread_mutex_lock(&mutex);
             if (send(ns, sendbuf, strlen(sendbuf) + 1, 0) < 0)
             {
                 perror("Send()");
                 exit(7);
             }
+            retorno = recv(ns, mensagem_inteira, sizeof(mensagem_inteira), 0); //recece a mensagem do cliente e verifica o valor de retorno
+            if (retorno == -1)
+            {
+                perror("Recvbuf()");
+                close(ns);
+                pthread_exit(NULL);
+            }
+            else if (retorno == 0)
+            {
+                printf("thread encerrada pois o cliente foi fechado num momento inesperado\n");
+                close(ns);
+                pthread_exit(NULL);
+            }
+            pthread_mutex_unlock(&mutex);
+
             pthread_mutex_lock(&mutex);
             for (int i = 0; i < indice; i++)
             {
-                sleep(1);
                 memset(sendbuf, 0, sizeof(sendbuf));
                 strcpy(mensagem_inteira, usuarios[i]);
                 strcat(mensagem_inteira, "#");
@@ -223,36 +245,37 @@ void *servidor(int ns)
                     perror("Send()");
                     exit(7);
                 }
-                retorno = recv(ns, recvbuf, sizeof(recvbuf), 0);
+                retorno = recv(ns, mensagem_inteira, sizeof(mensagem_inteira), 0); //recece a mensagem do cliente e verifica o valor de retorno
                 if (retorno == -1)
                 {
                     perror("Recvbuf()");
                     close(ns);
                     pthread_exit(NULL);
                 }
-                if (retorno == 0)
+                else if (retorno == 0)
                 {
+                    printf("thread encerrada pois o cliente foi fechado num momento inesperado\n");
                     close(ns);
                     pthread_exit(NULL);
                 }
-
                 //receber msg confirmação do cliente
             }
             pthread_mutex_unlock(&mutex);
         }
-        if (strcmp(recvbuf, "apa") == 0)
+        else if (strcmp(recvbuf, "apa") == 0)
         {
             // Apaga mensagem
             char nome[20];
-            retorno = recv(ns, recvbuf, sizeof(recvbuf), 0);
+            retorno = recv(ns, recvbuf, sizeof(recvbuf), 0); //recece a mensagem do cliente e verifica o valor de retorno
             if (retorno == -1)
             {
                 perror("Recvbuf()");
                 close(ns);
                 pthread_exit(NULL);
             }
-            if (retorno == 0)
+            else if (retorno == 0)
             {
+                printf("thread encerrada pois o cliente foi fechado num momento inesperado\n");
                 close(ns);
                 pthread_exit(NULL);
             }
@@ -284,13 +307,25 @@ void *servidor(int ns)
                 perror("Send()");
                 exit(7);
             }
+            retorno = recv(ns, mensagem_inteira, sizeof(mensagem_inteira), 0); //recece a mensagem do cliente e verifica o valor de retorno
+            if (retorno == -1)
+            {
+                perror("Recvbuf()");
+                close(ns);
+                pthread_exit(NULL);
+            }
+            else if (retorno == 0)
+            {
+                printf("thread encerrada pois o cliente foi fechado num momento inesperado\n");
+                close(ns);
+                pthread_exit(NULL);
+            }
 
             pthread_mutex_lock(&mutex);
             for (int i = 0; i < indice; i++)
             {
                 if (strcmp(nome, usuarios[i]) == 0)
                 {
-                    sleep(1);
                     memset(sendbuf, 0, sizeof(sendbuf));
                     strcpy(mensagem_inteira, usuarios[i]);
                     strcat(mensagem_inteira, "#");
@@ -330,38 +365,7 @@ void *servidor(int ns)
             pthread_mutex_unlock(&mutex);
         }
 
-        /* Apaga mensagem
-        char nome[20];
-        if (recv(ns, recvbuf, sizeof(recvbuf), 0) == -1)
-        {
-            perror("Recvbuf()");
-            exit(6);
-        }
-        strcpy(nome, recvbuf);
-        strcpy(sendbuf, "Usuario nao encontrado!\n");
-        for (int i = 0; i < indice; i++)
-        {
-            printf("[%d] Nome: %d\n", id_this_thread, i);
-            if (strcmp(nome, usuarios[i]) == 0)
-            {
-                printf("[%d] Nome %d localizado\n", id_this_thread, i);
-                for (int j = i; j < indice; j++)
-                {
-                    printf("[%d] Usuario %d recebe usuario %d\n", id_this_thread, j, j + 1);
-                    strcpy(usuarios[j], usuarios[j + 1]);
-                    strcpy(mensagens[j], mensagens[j + 1]);
-                }
-                indice--;
-                printf("[%d] Indice: %d\nI: %d\n", id_this_thread, indice, i);
-                strcpy(sendbuf, "Usuario e mensagem apagado com sucesso!\n");
-            }
-        }
-        if (send(ns, sendbuf, strlen(sendbuf) + 1, 0) < 0)
-        {
-            perror("Send()");
-            exit(7);
-        }*/
-        if (strcmp(recvbuf, "out") == 0)
+        else if (strcmp(recvbuf, "out") == 0)
         {
             close(ns);
             pthread_exit(NULL);
