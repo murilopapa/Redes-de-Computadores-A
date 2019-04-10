@@ -98,38 +98,43 @@ char **argv;
 printf("\nCliente Conectou\n");
     while (1)
     {
-int var;
+	int var;
         /* Recebe uma mensagem do cliente atrav�s do novo socket conectado */
         memset(mensagembuf, 0, sizeof(mensagembuf));
         memset(usuariobuf, 0, sizeof(usuariobuf));
         memset(recvbuf, 0, sizeof(recvbuf));
         memset(sendbuf, 0, sizeof(sendbuf));
-var = recv(ns, recvbuf, sizeof(recvbuf), 0);
+
+
+	var = recv(ns, recvbuf, sizeof(recvbuf), 0);
 
 
         if (var == -1)
         {
             perror("Recvbuf()");
+	    close(ns);
             exit(6);
         }
 
-	if (var == 0)
+	else if (var == 0)
         {
             perror("Recvbuf()");
-		close(ns);
-		close(s);
+	    close(ns);
             exit(6);
         }
+
+	var = 0;
 	
         printf("\nMensagem recebida do cliente: %s\n", recvbuf);
 
-			strcpy(sendbuf, "Enviando mensagem para o Arduino!");
-                            if (send(ns, sendbuf, strlen(sendbuf) + 1, 0) < 0)
-                            {
-                                perror("Send()");
-                                exit(7);
-                            }
-			printf("\nEnviando: %s\n",sendbuf);
+	strcpy(sendbuf, "Enviando mensagem para o Arduino!");
+	if (send(ns, sendbuf, strlen(sendbuf) + 1, 0) < 0)
+	{
+	perror("Send()");
+	exit(7);
+	}
+
+	printf("\nEnviando: %s\n",sendbuf);
 
     }
     /* Fecha o socket conectado ao cliente */
