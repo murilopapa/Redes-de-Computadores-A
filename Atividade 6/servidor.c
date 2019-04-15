@@ -86,8 +86,8 @@ void *servidor(int ns)
     char sendbuf[101];
     char recvbuf[101];
     int id_this_thread = count_servers; //no momento que a função é chamada, recebe o count pra saber qual o "id" dela
-    float temp_recebida;
-
+    float temp_recebida = 0;
+    int retorno = 0;
     /*
     O servidor deve aguardar por requisições de conexão enviadas pelos clientes
     e quando um novo cliente seconectar deve exibir uma mensagem informando o 
@@ -102,8 +102,7 @@ void *servidor(int ns)
         memset(recvbuf, 0, sizeof(recvbuf)); //zera as variaveis
         memset(sendbuf, 0, sizeof(sendbuf));
 
-        int retorno;
-
+        
         retorno = recv(ns, recvbuf, sizeof(recvbuf), 0); //recece a mensagem do cliente e verifica o valor de retorno
         if (retorno == -1)
         {
@@ -122,8 +121,8 @@ void *servidor(int ns)
 
         temp_recebida = atof(recvbuf); //atof é pra float, atoi é pra int, vamos usar float
 
-        pthread_mutex_lock(&mutex);
-        if (temp_recebida > maior_temp) //se ele for a maior temp, salva como maior temp e manda 1
+        
+        if (temp_recebida >= maior_temp) //se ele for a maior temp, salva como maior temp e manda 1
         {
             pthread_mutex_lock(&mutex);
             maior_temp = temp_recebida;

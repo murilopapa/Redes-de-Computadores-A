@@ -1,13 +1,13 @@
 #include <Ethernet.h>
 #include <SPI.h>
 
-#define sensorPin 0
+#define sensorPin A0
 #define ledPin 8
 float celsius, kelvin;
 int sensorValue, led_on_off;
 
 byte mac[] = {0x90, 0xA2, 0xDA, 0x00, 0x29, 0x02}; //mac do shield
-byte server[] = {192, 168, 9, 30};                 // IP do servidor
+byte server[] = {192, 168, 9, 44};                 // IP do servidor
 int tcp_port = 5000;                               //porta do servidor
 
 EthernetClient client;
@@ -34,14 +34,19 @@ void setup()
 
 void loop()
 {
-  GetTemp();
+  //GetTemp();
 
-  delay(10000); //10segundos | mudar o delay para o quanto ele quer no trabalho (que no caso é 10sec)
+  delay(2000); //10segundos | mudar o delay para o quanto ele quer no trabalho (que no caso é 10sec)
   if (client.connected())
   {
 
     char send_buff[10];
-    itof(celsius, send_buff, 10);
+    int analog_read = analogRead(sensorPin);
+    Serial.print("AnalogRead");
+    Serial.println(analog_read);
+    celsius = (float(analog_read)*5/(1023))/0.01;
+    dtostrf(celsius,4,2,send_buff);
+    //atof(celsius, send_buff, 10);
     client.write(send_buff);   // manda a msg pro servidor, tem que ser vetor de char
     Serial.print("Enviado: "); //confirma o que foi enviado
     Serial.println(send_buff); //confirma o que foi enviado
@@ -49,15 +54,13 @@ void loop()
     while (!client.available()) //loop de espera ocupada para esperar o servidor enviar algo
     {
     }
-    if (client.available()) //se possui algo para receber
-    {
+    
       led_on_off = client.read();   //vamos receber apenas 1 char do servidor falando se o led tem que ser acesso (1) ou apagado (0)
       client.read();                //recebemos 2 chars, o primeiro com a info, e o segundo com o /0, por isso o descartamos
       led_on_off = led_on_off - 48; //faz a conta da tabela ascii, para converter para o numero que queremos
       Serial.print("Recebido: ");   //printa o que recebeu, para confirmação
       Serial.println(led_on_off);
-    }
-
+      
     if (led_on_off) //se for pra acender a led
     {
       digitalWrite(ledPin, HIGH);   //manda um sinal de HIGH na porta da led
@@ -80,7 +83,8 @@ void loop()
 
 void GetTemp()
 {
-  sensorValue = analogRead(sensorPin);    //le analogicamente o que recebe do sensor de temp
-  kelvin = (((float(sensorValue) / 1023) * 5) * 100); //faz as contas para conversao
-  celsius = kelvin - 273.15;
+  Serial.print("Leitura analogRead: ");
+  Serial.println(analogRead(sensorPin));
+  celsius = (float(analogRead(sensorPin))*5/(1023))/0.01;
 }
+
