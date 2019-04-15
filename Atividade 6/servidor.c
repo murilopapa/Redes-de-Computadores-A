@@ -67,6 +67,8 @@ char **argv;
             perror("Accept()");
             exit(5);
         }
+        printf("Novo cliente!\n");
+        printf("IP: %lu\nPORTA: %u", client.sin_addr.s_addr, client.sin_port);
 
         if (pthread_create(&thread_id, NULL, servidor, (void *)ns))
         {
@@ -102,7 +104,6 @@ void *servidor(int ns)
         memset(recvbuf, 0, sizeof(recvbuf)); //zera as variaveis
         memset(sendbuf, 0, sizeof(sendbuf));
 
-        
         retorno = recv(ns, recvbuf, sizeof(recvbuf), 0); //recece a mensagem do cliente e verifica o valor de retorno
         if (retorno == -1)
         {
@@ -121,18 +122,26 @@ void *servidor(int ns)
 
         temp_recebida = atof(recvbuf); //atof é pra float, atoi é pra int, vamos usar float
 
-        
         if (temp_recebida >= maior_temp) //se ele for a maior temp, salva como maior temp e manda 1
         {
             pthread_mutex_lock(&mutex);
             maior_temp = temp_recebida;
             //envia 1 para ligar led
             strcpy(sendbuf, "1");
-            if (send(ns, sendbuf, strlen(sendbuf) + 1, 0) < 0)
+            retorno = send(ns, sendbuf, strlen(sendbuf) + 1, 0);
+            if (retorno == -1)
             {
                 perror("Send()");
-                exit(7);
+                close(ns);
+                pthread_exit(NULL);
             }
+            if (retorno == 0)
+            {
+                perror("Send()");
+                close(ns);
+                pthread_exit(NULL);
+            }
+            retorno = 0;
             pthread_mutex_unlock(&mutex);
             printf("\n[%d] Ligando led\n", id_this_thread);
         }
@@ -140,11 +149,21 @@ void *servidor(int ns)
         {
             //se ele n for a maior temp, apaga led enviando 0
             strcpy(sendbuf, "0");
-            if (send(ns, sendbuf, strlen(sendbuf) + 1, 0) < 0)
+            retorno = send(ns, sendbuf, strlen(sendbuf) + 1, 0);
+            if (retorno == -1)
             {
                 perror("Send()");
-                exit(7);
+                close(ns);
+                pthread_exit(NULL);
             }
+            if (retorno == 0)
+            {
+                perror("Send()");
+                close(ns);
+                pthread_exit(NULL);
+            }
+            retorno = 0;
+            
             printf("\n[%d] Apagando led\n", id_this_thread);
         }
     }
