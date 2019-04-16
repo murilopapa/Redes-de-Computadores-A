@@ -1,13 +1,19 @@
+// Ettore Biazon Baccan         16000465
+// Mateus Henrique Zorzi        16100661
+// Matheus Martins Pupo         16145559
+// Murilo Martos Mendonçca      16063497
+// Victor Hugo do Nascimento    16100588
+
 #include <Ethernet.h>
 #include <SPI.h>
 
-#define sensorPin A0
+#define sensorPin 2
 #define ledPin 8
 float celsius, kelvin;
 int sensorValue, led_on_off;
 
 byte mac[] = {0x90, 0xA2, 0xDA, 0x00, 0x29, 0x02}; //mac do shield
-byte server[] = {192, 168, 9, 44};                 // IP do servidor
+byte server[] = {192, 168, 9, 39};                 // IP do servidor
 int tcp_port = 5000;                               //porta do servidor
 
 EthernetClient client;
@@ -42,9 +48,9 @@ void loop()
 
     char send_buff[10];
     int analog_read = analogRead(sensorPin);
-    Serial.print("AnalogRead");
+    Serial.print("AnalogRead: ");
     Serial.println(analog_read);
-    celsius = (float(analog_read)*5/(1023))/0.01;
+    celsius = (5.0 * analog_read * 100.0) / 1024.0;
     dtostrf(celsius,4,2,send_buff);
     //atof(celsius, send_buff, 10);
     client.write(send_buff);   // manda a msg pro servidor, tem que ser vetor de char
@@ -79,12 +85,5 @@ void loop()
     for (;;)
       ;
   }
-}
-
-void GetTemp()
-{
-  Serial.print("Leitura analogRead: ");
-  Serial.println(analogRead(sensorPin));
-  celsius = (float(analogRead(sensorPin))*5/(1023))/0.01;
 }
 

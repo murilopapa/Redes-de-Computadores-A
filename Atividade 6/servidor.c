@@ -17,7 +17,7 @@ void *servidor(int ns);
 
 //variaveis globais, compartilhadas pelas threads
 pthread_t thread_id;
-float maior_temp = 0; //para armazenar a maior temp
+float temperaturas[10] = {0,0,0,0,0,0,0,0,0,0};  //para armazenar todas as temperaturas
 int count_servers = 0;
 pthread_mutex_t mutex;
 /*
@@ -120,12 +120,17 @@ void *servidor(int ns)
         retorno = 0;
         printf("\n[%d] Temperatura recebida do cliente: %s\n", id_this_thread, recvbuf);
 
-        temp_recebida = atof(recvbuf); //atof é pra float, atoi é pra int, vamos usar float
-
-        if (temp_recebida >= maior_temp) //se ele for a maior temp, salva como maior temp e manda 1
-        {
-            pthread_mutex_lock(&mutex);
-            maior_temp = temp_recebida;
+        temperaturas[id_this_thread] = atof(recvbuf); //atof é pra float, atoi é pra int, vamos usar float
+		
+		
+		int count = 0;
+		for(int i=0;i<10;i++){
+			if(temperaturas[id_this_thread] >= temperaturas[i]){
+				count++;
+			}
+		}
+		if(count == 10){
+			pthread_mutex_lock(&mutex);
             //envia 1 para ligar led
             strcpy(sendbuf, "1");
             retorno = send(ns, sendbuf, strlen(sendbuf) + 1, 0);
@@ -144,7 +149,7 @@ void *servidor(int ns)
             retorno = 0;
             pthread_mutex_unlock(&mutex);
             printf("\n[%d] Ligando led\n", id_this_thread);
-        }
+		}
         else //se ele n for a maior temp, so apaga o led
         {
             //se ele n for a maior temp, apaga led enviando 0
