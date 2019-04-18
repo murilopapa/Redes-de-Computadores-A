@@ -42,7 +42,7 @@ void loop()
 {
   //GetTemp();
 
-  delay(2000); //10segundos | mudar o delay para o quanto ele quer no trabalho (que no caso é 10sec)
+  delay(10000); //10segundos
   if (client.connected())
   {
 
