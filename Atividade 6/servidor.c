@@ -107,12 +107,14 @@ void *servidor(int ns)
         retorno = recv(ns, recvbuf, sizeof(recvbuf), 0); //recece a mensagem do cliente e verifica o valor de retorno
         if (retorno == -1)
         {
+	    temperaturas[id_this_thread] = 0; //zera a temperatura para não interferir nas proximas execucoes
             perror("Recvbuf()");
             close(ns);
             pthread_exit(NULL);
         }
         else if (retorno == 0)
         {
+	    temperaturas[id_this_thread] = 0; //zera a temperatura para não interferir nas proximas execucoes
             printf("thread encerrada pois o cliente foi fechado num momento inesperado\n");
             close(ns);
             pthread_exit(NULL);
