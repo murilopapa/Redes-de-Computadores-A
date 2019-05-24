@@ -11,12 +11,13 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <pthread.h>
+#include <arpa/inet.h>
 
 //necessario salvar de alguma maneira os ips e portas dos cliente.
 struct cliente
 {
     unsigned short porta;
-    long unsigned int ip;
+    char *ip;
     char telefone[9];
     int id;
     struct cliente *prox;
@@ -25,7 +26,7 @@ struct cliente
 //prototipos
 //obs, os que manipulam a lista, nao recebem ela por parametro pq ela é var global
 void *servidor(int ns);
-int inserir_cliente(char *telefone, unsigned short porta, long unsigned int ip);
+int inserir_cliente(char *telefone, unsigned short porta, char *ip);
 void remover_cliente(char *telefone);
 
 //variaveis globais, compartilhadas pelas threads
@@ -119,7 +120,12 @@ char **argv;
         printf("\nPORTA RECEBIDA: %d\n", porta);
         //salvar na lista ligada.
         //abre semaforo
-        if (inserir_cliente(telefone, porta_cliente, client.sin_addr.s_addr) == -1)
+
+        char *ip_teste;
+        ip_teste = inet_ntoa(client.sin_addr);
+
+        printf("\nIP CONVERTIDO: %s\n", ip_teste);
+        if (inserir_cliente(telefone, porta_cliente, ip_teste) == -1)
         {
             printf("ERRO: não foi possivel incluir o elemento na lista ligada.\n");
             //tratar melhor esse erro
@@ -215,7 +221,7 @@ void *servidor(int ns)
         if (online == 1)
         {
             //enviar ao cliente a mensagem contendo o ip e porta que se encontram na struct cliente atual
-            sprintf(sendbuf, "%lu+%u", localizado->ip, localizado->porta); //resultado: ip+porta ex: "192.168.0.1+450"
+            sprintf(sendbuf, "%s+%u", localizado->ip, localizado->porta); //resultado: ip+porta ex: "192.168.0.1+450"
             if (send(ns, sendbuf, strlen(sendbuf) + 1, 0) < 0)
             {
                 perror("Send()");
@@ -240,8 +246,9 @@ void *servidor(int ns)
     }
 }
 
-int inserir_cliente(char *telefone, unsigned short porta, long unsigned int ip)
+int inserir_cliente(char *telefone, unsigned short porta, char *ip)
 {
+
     struct cliente *novo;
     struct cliente *atual;
     //instancia o novo cliente
@@ -275,7 +282,7 @@ int inserir_cliente(char *telefone, unsigned short porta, long unsigned int ip)
     }
     printf("\nINSERIDO CLIENTE:\n");
     printf("NUMERO: %s\n", novo->telefone);
-    printf("IP: %lu\n", novo->ip);
+    printf("IP: %s\n", novo->ip);
     printf("PORTA: %u\n", novo->porta);
     printf("ID: %u\n\n", novo->id);
 
@@ -286,7 +293,7 @@ int inserir_cliente(char *telefone, unsigned short porta, long unsigned int ip)
     {
         printf("\nCLIENTES NA LISTA:\n");
         printf("NUMERO: %s\n", novo->telefone);
-        printf("IP: %lu\n", novo->ip);
+        printf("IP: %s\n", novo->ip);
         printf("PORTA: %u\n", novo->porta);
         printf("ID: %u\n\n", novo->id);
     }
@@ -297,14 +304,14 @@ int inserir_cliente(char *telefone, unsigned short porta, long unsigned int ip)
         {
             printf("\n----------------------------\n");
             printf("NUMERO: %s\n", novo->telefone);
-            printf("IP: %lu\n", novo->ip);
+            printf("IP: %s\n", novo->ip);
             printf("PORTA: %u\n", novo->porta);
             printf("ID: %u\n\n", novo->id);
             novo = novo->prox;
         }
         printf("\n----------------------------\n");
         printf("NUMERO: %s\n", novo->telefone);
-        printf("IP: %lu\n", novo->ip);
+        printf("IP: %s\n", novo->ip);
         printf("PORTA: %u\n", novo->porta);
         printf("ID: %u\n\n", novo->id);
     }
@@ -339,7 +346,7 @@ void remover_cliente(char *telefone)
         }
         printf("REMOVIDO:\n");
         printf("NUMERO: %s\n", atual->telefone);
-        printf("IP: %lu\n", atual->ip);
+        printf("IP: %s\n", atual->ip);
         printf("PORTA: %u\n", atual->porta);
         printf("ID: %u\n\n", atual->id);
         free(atual);
