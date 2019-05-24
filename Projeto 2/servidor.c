@@ -18,6 +18,7 @@ struct cliente
     unsigned short porta;
     long unsigned int ip;
     char telefone[9];
+    int id;
     struct cliente *prox;
 };
 
@@ -111,7 +112,6 @@ char **argv;
             printf("ERRO: impossivel criar uma thread\n");
             exit(-1);
         }
-        count_servers++;
         //pthread_detach(thread_id);
     }
 
@@ -121,19 +121,33 @@ char **argv;
 
 void *servidor(int ns)
 {
-    struct cliente *atual, *localizado;
+    struct cliente *atual, *localizado, *this_client;
     int retorno;
     char telefone_recebido[9];
     char sendbuf[101];
     char recvbuf[101];
     int id_this_thread = count_servers; //no momento que a função é chamada, recebe o count pra saber qual o "id" dela
+    count_servers++;
 
+    atual = raiz;
+    while (atual->prox != NULL)
+    {
+        if (atual->id == id_this_thread) //encontrado o telefone procurado
+        {
+            this_client = atual;
+        }
+        atual = atual->prox;
+    }
+    if (atual->id == id_this_thread) //encontrado o telefone procurado
+    {
+        this_client = atual;
+    }
     /*
     O servidor deve aguardar por requisições de conexão enviadas pelos cliente, os cliente informarao o numero para o qual eles desejam saber o ip e porta.
     O servidor responderá com o Ip e porta.
     */
 
-    printf("\n[%d] Thread criada com sucesso\n", id_this_thread);
+    printf("\n[%s] Thread criada com sucesso\n", this_client->telefone);
     while (1)
     {
         /*A troca de mensagens baseadas entre o cliente e o servidor
@@ -146,12 +160,14 @@ void *servidor(int ns)
         if (retorno == -1)
         {
             perror("Recvbuf()");
+            remover_cliente(this_client->telefone);
             close(ns);
             pthread_exit(NULL);
         }
         else if (retorno == 0)
         {
-            printf("thread encerrada pois o cliente foi fechado num momento inesperado\n");
+            printf("[%s] Thread encerrada pois o cliente foi fechado num momento inesperado\n", this_client->telefone);
+            remover_cliente(this_client->telefone);
             close(ns);
             pthread_exit(NULL);
         }
@@ -175,8 +191,8 @@ void *servidor(int ns)
             online = 1;
         }
 
-        printf("\n[%d] Verificar telefone: %s\n", id_this_thread, recvbuf);
-        printf("\n[%d] Online = %d\n", id_this_thread, online);
+        printf("\n[%s] Verificar telefone: %s\n", this_client->telefone, recvbuf);
+        printf("\n[%s] Online = %d\n", this_client->telefone, online);
         if (online == 1)
         {
             //enviar ao cliente a mensagem contendo o ip e porta que se encontram na struct cliente atual
@@ -184,7 +200,9 @@ void *servidor(int ns)
             if (send(ns, sendbuf, strlen(sendbuf) + 1, 0) < 0)
             {
                 perror("Send()");
-                exit(5);
+                remover_cliente(this_client->telefone);
+                close(ns);
+                pthread_exit(NULL);
             } //informa ao servidor o ip e porta
         }
         else
@@ -195,7 +213,9 @@ void *servidor(int ns)
             if (send(ns, "offline", 7, 0) < 0)
             {
                 perror("Send()");
-                exit(5);
+                remover_cliente(this_client->telefone);
+                close(ns);
+                pthread_exit(NULL);
             }
         }
     }
@@ -217,6 +237,7 @@ int inserir_cliente(char *telefone, unsigned short porta, long unsigned int ip)
     novo->ip = ip;
     novo->porta = porta;
     novo->prox = NULL;
+    novo->id = count_servers;
 
     if (raiz == NULL) //Lista vazia
     {
@@ -236,7 +257,8 @@ int inserir_cliente(char *telefone, unsigned short porta, long unsigned int ip)
     printf("\nINSERIDO CLIENTE:\n");
     printf("NUMERO: %s\n", novo->telefone);
     printf("IP: %lu\n", novo->ip);
-    printf("PORTA: %u\n\n", novo->porta);
+    printf("PORTA: %u\n", novo->porta);
+    printf("ID: %u\n\n", novo->id);
 
     //teste pra printar a lista toda
     novo = raiz;
@@ -247,6 +269,7 @@ int inserir_cliente(char *telefone, unsigned short porta, long unsigned int ip)
         printf("NUMERO: %s\n", novo->telefone);
         printf("IP: %lu\n", novo->ip);
         printf("PORTA: %u\n", novo->porta);
+        printf("ID: %u\n\n", novo->id);
     }
     else
     {
@@ -257,12 +280,14 @@ int inserir_cliente(char *telefone, unsigned short porta, long unsigned int ip)
             printf("NUMERO: %s\n", novo->telefone);
             printf("IP: %lu\n", novo->ip);
             printf("PORTA: %u\n", novo->porta);
+            printf("ID: %u\n\n", novo->id);
             novo = novo->prox;
         }
         printf("\n----------------------------\n");
         printf("NUMERO: %s\n", novo->telefone);
         printf("IP: %lu\n", novo->ip);
         printf("PORTA: %u\n", novo->porta);
+        printf("ID: %u\n\n", novo->id);
     }
     //fim do teste
 
@@ -280,7 +305,7 @@ void remover_cliente(char *telefone)
         struct cliente *atual, *anterior;
         anterior = NULL;
         atual = raiz;
-        while (atual->telefone != telefone) //talvez usar strcmp?
+        while (strcmp(atual->telefone, telefone) != 0) //talvez usar strcmp?
         {
             anterior = atual;
             atual = atual->prox;
@@ -293,7 +318,11 @@ void remover_cliente(char *telefone)
         {
             anterior->prox = atual->prox;
         }
-
+        printf("REMOVIDO:\n");
+        printf("NUMERO: %s\n", atual->telefone);
+        printf("IP: %lu\n", atual->ip);
+        printf("PORTA: %u\n", atual->porta);
+        printf("ID: %u\n\n", atual->id);
         free(atual);
     }
 }

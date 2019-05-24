@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <time.h>
 
 //variaveis globais
 pthread_t thread_id;
@@ -26,6 +27,7 @@ void *servidor();
 main(argc, argv) int argc;
 char **argv;
 {
+    srand(time(NULL));
     char telefone[9];
     unsigned short port;
     char sendbuf[101];
@@ -85,7 +87,7 @@ char **argv;
     }
     printf("\nInforme seu zap, rs: ");
     scanf("%s", &telefone);
-    if (send(s, telefone, strlen(telefone) + 1, 0) < 0)
+    if (send(s, telefone, 9, 0) < 0)
     {
         perror("Send()");
         exit(5);
@@ -183,8 +185,9 @@ void *servidor()
     char recvbuf[101];
     int s;  /* Socket para aceitar conex�es       */
     int ns; /* Socket conectado ao cliente        */
-    //gerar a porta aleatoriamente
-    port = (unsigned short)atoi("5001");
+    int porta = 5000 + (rand() % 1000);
+    port = (unsigned short)porta;
+    printf("\nPORTA USADA: %d\n", porta);
     if ((s = socket(PF_INET, SOCK_STREAM, 0)) < 0)
     {
         perror("Socket()");
