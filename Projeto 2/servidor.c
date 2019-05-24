@@ -84,7 +84,23 @@ char **argv;
         }
 
         //receber telefone
-        int retorno = recv(ns, recvbuf, sizeof(recvbuf), 0); //recebe a mensagem do cliente e verifica o valor de retorno
+        int retorno = recv(ns, recvbuf, 10, 0); //recebe a mensagem do cliente e verifica o valor de retorno
+        if (retorno == -1)
+        {
+            perror("Recvbuf()");
+            close(ns);
+            pthread_exit(NULL);
+        }
+        else if (retorno == 0)
+        {
+            printf("Thread encerrada pois o cliente foi fechado num momento inesperado\n");
+            close(ns);
+            pthread_exit(NULL);
+        }
+        char telefone[10];
+        strcpy(telefone, recvbuf);
+
+        retorno = recv(ns, recvbuf, 5, 0); //recebe a mensagem do cliente e verifica o valor de retorno
         if (retorno == -1)
         {
             perror("Recvbuf()");
@@ -98,9 +114,12 @@ char **argv;
             pthread_exit(NULL);
         }
 
+        int porta = atoi(recvbuf);
+        unsigned short porta_cliente = (unsigned short)porta;
+        printf("\nPORTA RECEBIDA: %d\n", porta);
         //salvar na lista ligada.
         //abre semaforo
-        if (inserir_cliente(recvbuf, client.sin_port, client.sin_addr.s_addr) == -1)
+        if (inserir_cliente(telefone, porta_cliente, client.sin_addr.s_addr) == -1)
         {
             printf("ERRO: não foi possivel incluir o elemento na lista ligada.\n");
             //tratar melhor esse erro

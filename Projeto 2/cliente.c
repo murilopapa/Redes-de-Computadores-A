@@ -17,6 +17,7 @@
 
 //variaveis globais
 pthread_t thread_id;
+int porta;
 
 //prototipos
 void *servidor();
@@ -93,12 +94,23 @@ char **argv;
         exit(5);
     } //informa ao servidor o numero de telefone
 
+    porta = 5000 + (rand() % 1000);
+
     //cria uma thread que seria o servidor, que aguarda por conexões
     if (pthread_create(&thread_id, NULL, servidor, (void *)NULL))
     {
         printf("ERRO: impossivel criar uma thread\n");
         exit(-1);
     }
+    sleep(1);
+    char porta_this_server[5];
+    sprintf(porta_this_server, "%d", porta);
+
+    if (send(s, porta_this_server, 5, 0) < 0)
+    {
+        perror("Send()");
+        exit(5);
+    } //informa ao servidor o numero de telefone
 
     int op;
     do
@@ -185,7 +197,7 @@ void *servidor()
     char recvbuf[101];
     int s;  /* Socket para aceitar conex�es       */
     int ns; /* Socket conectado ao cliente        */
-    int porta = 5000 + (rand() % 1000);
+
     port = (unsigned short)porta;
     printf("\nPORTA USADA: %d\n", porta);
     if ((s = socket(PF_INET, SOCK_STREAM, 0)) < 0)
