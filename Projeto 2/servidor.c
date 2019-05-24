@@ -12,39 +12,40 @@
 #include <string.h>
 #include <pthread.h>
 
+//necessario salvar de alguma maneira os ips e portas dos cliente.
+struct cliente
+{
+    unsigned short porta;
+    long unsigned int ip;
+    char telefone[9];
+    struct cliente *prox;
+};
+
 //prototipos
+//obs, os que manipulam a lista, nao recebem ela por parametro pq ela é var global
 void *servidor(int ns);
-int inserir_no_fim(struct clientes **raiz, char *telefone,  unsigned short porta, long unsigned int ip);
-void remover_no_fim(struct clientes **raiz);
+int inserir_cliente(char *telefone, unsigned short porta, long unsigned int ip);
+void remover_cliente(char *telefone);
 
 //variaveis globais, compartilhadas pelas threads
 pthread_t thread_id;
 int count_servers = 0;
 pthread_mutex_t mutex;
-
-
-//necessario salvar de alguma maneira os ips e portas dos clientes.
-struct clientes{
-    unsigned short porta;
-    long unsigned int ip;
-    char telefone [9];
-    struct clientes_conectados *prox;
-};
+struct cliente *raiz = NULL; //cria o primeiro elemento da lista dos cliente conectados
 
 /*
  * Servidor TCP
  */
 main(argc, argv) int argc;
 char **argv;
-{   
-    struct clientes *raiz = null;  //cria o primeiro elemento da lista dos clientes conectados
-    raiz = (struct clientes *) malloc(sizeof(struct clientes));
+{
     unsigned short port;
-
     struct sockaddr_in client;
     struct sockaddr_in server;
+    char recvbuf[101];
     int s;  /* Socket para aceitar conex�es       */
     int ns; /* Socket conectado ao cliente        */
+
     if (argc != 2)
     {
         fprintf(stderr, "Use: %s porta\n", argv[0]);
@@ -80,14 +81,30 @@ char **argv;
             perror("Accept()");
             exit(5);
         }
-        printf("Novo cliente!\n");
-        printf("IP: %lu\nPORTA: %u", client.sin_addr.s_addr, client.sin_port);
+
+        //receber telefone
+        int retorno = recv(ns, recvbuf, sizeof(recvbuf), 0); //recebe a mensagem do cliente e verifica o valor de retorno
+        if (retorno == -1)
+        {
+            perror("Recvbuf()");
+            close(ns);
+            pthread_exit(NULL);
+        }
+        else if (retorno == 0)
+        {
+            printf("Thread encerrada pois o cliente foi fechado num momento inesperado\n");
+            close(ns);
+            pthread_exit(NULL);
+        }
 
         //salvar na lista ligada.
-        if (inserir_no_fim(*raiz, telefone, client.sin_port, client.sin_addr) == -1)
+        //abre semaforo
+        if (inserir_cliente(recvbuf, client.sin_port, client.sin_addr.s_addr) == -1)
         {
             printf("ERRO: não foi possivel incluir o elemento na lista ligada.\n");
+            //tratar melhor esse erro
         }
+        //fecha semaforo
 
         if (pthread_create(&thread_id, NULL, servidor, (void *)ns))
         {
@@ -103,8 +120,8 @@ char **argv;
 }
 
 void *servidor(int ns)
-{   
-    struct clientes *atual;
+{
+    struct cliente *atual, *localizado;
     int retorno;
     char telefone_recebido[9];
     char sendbuf[101];
@@ -112,15 +129,20 @@ void *servidor(int ns)
     int id_this_thread = count_servers; //no momento que a função é chamada, recebe o count pra saber qual o "id" dela
 
     /*
-    O servidor deve aguardar por requisições de conexão enviadas pelos clientes, os clientes informarao o numero para o qual eles desejam saber o ip e porta.
+    O servidor deve aguardar por requisições de conexão enviadas pelos cliente, os cliente informarao o numero para o qual eles desejam saber o ip e porta.
     O servidor responderá com o Ip e porta.
     */
 
     printf("\n[%d] Thread criada com sucesso\n", id_this_thread);
     while (1)
     {
+        /*A troca de mensagens baseadas entre o cliente e o servidor
+        serao apenas do tipo: Numero tal esta online?, e a resposta sera sim ou nao
+        se for sim, mandar o ip e a porta
+        */
+        //a msg que recebe, é o telefone que quer verificar
         retorno = recv(ns, recvbuf, sizeof(recvbuf), 0); //recebe a mensagem do cliente e verifica o valor de retorno
-        
+
         if (retorno == -1)
         {
             perror("Recvbuf()");
@@ -133,78 +155,145 @@ void *servidor(int ns)
             close(ns);
             pthread_exit(NULL);
         }
+        //percorrer o vetor todo, e ver se o cliente solicitado esta online
+        int online = 0;
+        atual = raiz;
 
-        //percorre a lista para verificar se o cliente dono do telefone recebido se encontra online.
-        *atual = *raiz;
-        while(atual-> prox =! null)
+        while (atual->prox != NULL)
         {
-            if(strcmp(atual->telefone, telefone_recebido))  //encontrado o telefone procurado
-            {   
-                
-            }
-            else
+            if (strcmp(atual->telefone, recvbuf) == 0) //encontrado o telefone procurado
             {
-                atual = atual->prox;
+                localizado = atual;
+                online = 1;
             }
+
+            atual = atual->prox;
+        }
+        if (strcmp(atual->telefone, recvbuf) == 0) //encontrado o telefone procurado
+        {
+            localizado = atual;
+            online = 1;
         }
 
-        //enviar ao cliente a mensagem contendo o ip e porta que se encontram na struct clientes atual
-        sprintf(sendbuf, "%lu+%u", atual->ip, atual->porta);    //resultado: ip+porta ex: "192.168.0.1+450"
-        if (send(s, sendbuf, strlen(sendbuf) + 1, 0) < 0)
+        printf("\n[%d] Verificar telefone: %s\n", id_this_thread, recvbuf);
+        printf("\n[%d] Online = %d\n", id_this_thread, online);
+        if (online == 1)
         {
-            perror("Send()");
+            //enviar ao cliente a mensagem contendo o ip e porta que se encontram na struct cliente atual
+            sprintf(sendbuf, "%lu+%u", localizado->ip, localizado->porta); //resultado: ip+porta ex: "192.168.0.1+450"
+            if (send(ns, sendbuf, strlen(sendbuf) + 1, 0) < 0)
+            {
+                perror("Send()");
                 exit(5);
-        }//informa ao servidor o ip e porta
-
-    }//talvez seja necessario garantir a sincronia aqui, caso dois clientes tentem conectar com o servidor ao mesmo tempo, ou caso algum cliente se disconecte
+            } //informa ao servidor o ip e porta
+        }
+        else
+        {
+            //envia 0, ou "offline", falando que o cliente procurado nao esta online
+            //offline tem 7 letras, +\n tem 8
+            //n sei se é 7 ou 8 que tem que colocar, tem que testar
+            if (send(ns, "offline", 7, 0) < 0)
+            {
+                perror("Send()");
+                exit(5);
+            }
+        }
+    }
 }
 
-int inserir_no_fim(struct clientes **raiz, char *telefone,  unsigned short porta, long unsigned int ip)
+int inserir_cliente(char *telefone, unsigned short porta, long unsigned int ip)
 {
-    struct clientes *novo; 
-    struct clientes *atual;
-
-    novo = (struct clientes *) malloc(sizeof(struct No));
-    if(novo == NULL){
+    struct cliente *novo;
+    struct cliente *atual;
+    //instancia o novo cliente
+    novo = (struct cliente *)malloc(sizeof(struct cliente));
+    if (novo == NULL)
+    {
         printf("Falta Memoria\n");
         return -1;
     }
-    novo->telefone = telefone;
+    //preenche o novo cliente
+    strcpy(novo->telefone, telefone);
     novo->ip = ip;
     novo->porta = porta;
-    novo->p_prox = NULL;
-    
-    if(*raiz == NULL)  //Lista vazia
+    novo->prox = NULL;
+
+    if (raiz == NULL) //Lista vazia
     {
-        *raiz = novo;
+        printf("\nprimeiro cadastro\n");
+        raiz = novo;
     }
     else
     {
-        atual = *raiz;   /*@ Primeiro elemento*/ 
-        while(atual->prox != NULL){
-            atual = atual->p_prox;
+        printf("\nn eh primeiro cadastro\n");
+        atual = raiz; /*@ Primeiro elemento*/
+        while (atual->prox != NULL)
+        {
+            atual = atual->prox;
         }
         atual->prox = novo;
     }
-}
+    printf("\nINSERIDO CLIENTE:\n");
+    printf("NUMERO: %s\n", novo->telefone);
+    printf("IP: %lu\n", novo->ip);
+    printf("PORTA: %u\n\n", novo->porta);
 
-void remover_no_fim(struct clientes **raiz){
-    if(*raiz == NULL)
+    //teste pra printar a lista toda
+    novo = raiz;
+
+    if (novo->prox == NULL) //1 cliente so
     {
-        printf("A lista ja esta vazia\n");
+        printf("\nCLIENTES NA LISTA:\n");
+        printf("NUMERO: %s\n", novo->telefone);
+        printf("IP: %lu\n", novo->ip);
+        printf("PORTA: %u\n", novo->porta);
     }
     else
     {
-        struct clientes atual, anterior;
-        atual = *raiz;
-        while(p_atual->p_prox != NULL)
+        printf("\nCLIENTES NA LISTA:\n");
+        while (novo->prox != NULL)
         {
-            p_anterior = p_atual ;
-            p_atual    = p_atual->p_prox;
+            printf("\n----------------------------\n");
+            printf("NUMERO: %s\n", novo->telefone);
+            printf("IP: %lu\n", novo->ip);
+            printf("PORTA: %u\n", novo->porta);
+            novo = novo->prox;
         }
-        anterior->prox = NULL;
+        printf("\n----------------------------\n");
+        printf("NUMERO: %s\n", novo->telefone);
+        printf("IP: %lu\n", novo->ip);
+        printf("PORTA: %u\n", novo->porta);
+    }
+    //fim do teste
+
+    return 1;
+}
+
+void remover_cliente(char *telefone)
+{
+    if (raiz == NULL)
+    {
+        printf("A lista esta vazia\n");
+    }
+    else
+    {
+        struct cliente *atual, *anterior;
+        anterior = NULL;
+        atual = raiz;
+        while (atual->telefone != telefone) //talvez usar strcmp?
+        {
+            anterior = atual;
+            atual = atual->prox;
+        }
+        if (anterior == NULL) //pq só tem 1 elemento
+        {
+            raiz = NULL;
+        }
+        else
+        {
+            anterior->prox = atual->prox;
+        }
+
         free(atual);
     }
 }
-
-
