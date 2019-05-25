@@ -15,6 +15,20 @@
 #include <pthread.h>
 #include <time.h>
 
+// Structs
+struct contato
+{
+    char nome[51];
+    char telefone[9];
+    struct contato *prox;
+};
+
+struct grupo
+{
+    struct contato *raiz;
+    struct grupo *prox;
+};
+
 //variaveis globais
 pthread_t thread_id;
 int porta;
@@ -33,6 +47,8 @@ char **argv;
     unsigned short port;
     char sendbuf[101];
     char recvbuf[101];
+    char ipAtual[16];
+    char portaAtual[5];
     struct hostent *hostnm;
     struct sockaddr_in server;
     int s;
@@ -102,7 +118,7 @@ char **argv;
         printf("ERRO: impossivel criar uma thread\n");
         exit(-1);
     }
-    sleep(1);
+    //sleep(1);
     char porta_this_server[5];
     sprintf(porta_this_server, "%d", porta);
 
@@ -121,9 +137,13 @@ char **argv;
         memset(nome, 0, sizeof(nome));
         char op_rec[10];
         char num_pesquisar[9];
-        printf("\nSelecione a opcao\n");
-        printf("\n1-Enviar para usuario");
-        printf("\n2-Enviar para grupo\n");
+        printf("\nSelecione a opção\n");
+        printf("\n1) Usuários");
+        printf("\n2) Grupos");
+        printf("\n3) Cadastrar usuário");
+        printf("\n4) Criar grupo");
+        printf("\n5) Sair\n");
+        printf("\nOpção: ");
         scanf("%s", &op_rec);
         op = atoi(op_rec);
         //provavelmente um menu com as opcoes (mandar mensagem, criar grupo, etc)
@@ -133,7 +153,7 @@ char **argv;
         case 1:
             // enviar mensagem
             //aqui o cliente esta apenas verificando se o numero
-            printf("\nDeseja enviar msg para qual numero?\n");
+            printf("\nDeseja enviar msg para qual numero: ");
             scanf("%s", &num_pesquisar);
             if (send(s, num_pesquisar, sizeof(num_pesquisar), 0) < 0)
             {
@@ -146,13 +166,13 @@ char **argv;
             {
                 perror("Recvbuf()");
                 close(s);
-                pthread_exit(NULL);
+                exit(1);
             }
             else if (retorno == 0)
             {
                 printf("thread encerrada pois o cliente foi fechado num momento inesperado\n");
                 close(s);
-                pthread_exit(NULL);
+                exit(1);
             }
             if (strcmp("offline", recvbuf) == 0)
             {
@@ -160,9 +180,12 @@ char **argv;
             }
             else
             {
-                printf("Cliente online no ip e porta: %s", recvbuf);
-            }
+                strcpy(ipAtual, strtok(recvbuf, "+"));
+                strcpy(portaAtual, strtok(NULL, "$"));
 
+                printf("Ip atual: %s\n", recvbuf);
+                printf("Porta atual: %s", portaAtual);
+            }
             break;
 
         case 2:
@@ -170,17 +193,19 @@ char **argv;
 
             break;
 
-        case 4: //sair
+        case 3: // Registrar usuário
             printf("Obrigado por utilizar a aplicacao\n");
-
             break;
-
+        case 4: // Cria grupo
+            break;
+        case 5: // Sair
+            break;
         default:
-            printf("Opcao invalida!\n");
+            printf("Opcao Inválida!\n");
             break;
         }
 
-    } while (op != 4);
+    } while (op != 5);
 
     /* Fecha o socket */
     close(s);
@@ -199,7 +224,7 @@ void *servidor()
     int ns; /* Socket conectado ao cliente        */
 
     port = (unsigned short)porta;
-    printf("\nPORTA USADA: %d\n", porta);
+    //printf("\nPORTA USADA: %d\n", porta);
     if ((s = socket(PF_INET, SOCK_STREAM, 0)) < 0)
     {
         perror("Socket()");

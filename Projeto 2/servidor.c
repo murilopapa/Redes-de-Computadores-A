@@ -121,11 +121,11 @@ char **argv;
         //salvar na lista ligada.
         //abre semaforo
 
-        char *ip_teste;
-        ip_teste = inet_ntoa(client.sin_addr);
+        char *ip_consultado;
+        ip_consultado = inet_ntoa(client.sin_addr);
 
-        printf("\nIP CONVERTIDO: %s\n", ip_teste);
-        if (inserir_cliente(telefone, porta_cliente, ip_teste) == -1)
+        //printf("\nIP CONVERTIDO: %s\n", ip_consultado);
+        if (inserir_cliente(telefone, porta_cliente, ip_consultado) == -1)
         {
             printf("ERRO: não foi possivel incluir o elemento na lista ligada.\n");
             //tratar melhor esse erro
@@ -221,7 +221,7 @@ void *servidor(int ns)
         if (online == 1)
         {
             //enviar ao cliente a mensagem contendo o ip e porta que se encontram na struct cliente atual
-            sprintf(sendbuf, "%s+%u", localizado->ip, localizado->porta); //resultado: ip+porta ex: "192.168.0.1+450"
+            sprintf(sendbuf, "%s+%u$", localizado->ip, localizado->porta); //resultado: ip+porta ex: "192.168.0.1+450"
             if (send(ns, sendbuf, strlen(sendbuf) + 1, 0) < 0)
             {
                 perror("Send()");
