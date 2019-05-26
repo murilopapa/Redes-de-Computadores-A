@@ -25,6 +25,7 @@ struct contato
 
 struct grupo
 {
+    char nome[51];
     struct contato *raiz;
     struct grupo *prox;
 };
@@ -32,6 +33,7 @@ struct grupo
 //variaveis globais
 pthread_t thread_id;
 int porta;
+struct contato *raiz = NULL;
 
 //prototipos
 void *servidor();
@@ -39,9 +41,12 @@ void *servidor();
 /*
  * Cliente TCP
  */
+
 main(argc, argv) int argc;
 char **argv;
 {
+    FILE *arquivoContatos;
+    FILE *arquivoGrupos;
     srand(time(NULL));
     char telefone[9];
     unsigned short port;
@@ -57,7 +62,12 @@ char **argv;
     char nome[20];
     char envio[101]; // + o "#"
 
-    char operacao[4]; //cad, ler, apa
+    // Variáveis para a opção 3
+    char salvarTelefone[9];
+    char salvarNome[51];
+    // Variaveis para a opcao 1
+    char lerNome[51];
+    char lerTelefone[9];
 
     /*
      * O primeiro argumento (argv[1]) � o hostname do servidor.
@@ -103,7 +113,9 @@ char **argv;
         exit(4);
     }
     printf("\nInforme seu zap, rs: ");
-    scanf("%s", &telefone);
+    fflush(stdin);
+    gets(telefone);
+    fflush(stdin);
     if (send(s, telefone, 9, 0) < 0)
     {
         perror("Send()");
@@ -118,7 +130,7 @@ char **argv;
         printf("ERRO: impossivel criar uma thread\n");
         exit(-1);
     }
-    //sleep(1);
+    sleep(1);
     char porta_this_server[5];
     sprintf(porta_this_server, "%d", porta);
 
@@ -144,7 +156,11 @@ char **argv;
         printf("\n4) Criar grupo");
         printf("\n5) Sair\n");
         printf("\nOpção: ");
-        scanf("%s", &op_rec);
+
+        fflush(stdin);
+        gets(op_rec);
+        fflush(stdin);
+
         op = atoi(op_rec);
         //provavelmente um menu com as opcoes (mandar mensagem, criar grupo, etc)
         switch (op)
@@ -152,9 +168,49 @@ char **argv;
 
         case 1:
             // enviar mensagem
+
+            arquivoContatos = fopen("contatos.dat", "rb");
+            if (!arquivoContatos)
+            {
+                printf("\nErro na abertura do arquivo.\n");
+            }
+            else
+            {
+                printf("\n");
+                int idTemporario = 1;
+                while (fread(&lerNome, sizeof(lerNome), 1, arquivoContatos) != NULL)
+                {
+                    struct contato *novo = (struct contato *)malloc(sizeof(struct contato));
+                    struct contato *aux;
+                    fread(&lerTelefone, sizeof(lerTelefone), 1, arquivoContatos);
+                    strcpy(novo->nome, lerNome);
+                    strcpy(novo->telefone, lerTelefone);
+                    novo->prox = NULL;
+                    printf("[%d] %s\t\t%s\n", idTemporario, novo->nome, novo->telefone);
+                    idTemporario++;
+                    if (raiz == NULL)
+                    {
+                        raiz = novo;
+                    }
+                    else
+                    {
+                        aux = raiz;
+                        while (aux->prox != NULL)
+                        {
+                            aux = aux->prox;
+                        }
+                        aux->prox = novo;
+                    }
+                }
+                fclose(arquivoContatos);
+            }
+
             //aqui o cliente esta apenas verificando se o numero
             printf("\nDeseja enviar msg para qual numero: ");
-            scanf("%s", &num_pesquisar);
+            fflush(stdin);
+            gets(num_pesquisar);
+            fflush(stdin);
+
             if (send(s, num_pesquisar, sizeof(num_pesquisar), 0) < 0)
             {
                 perror("Send()");
@@ -176,7 +232,7 @@ char **argv;
             }
             if (strcmp("offline", recvbuf) == 0)
             {
-                printf("\ncliente offline\n");
+                printf("\nCliente offline\n");
             }
             else
             {
@@ -185,6 +241,57 @@ char **argv;
 
                 printf("Ip atual: %s\n", recvbuf);
                 printf("Porta atual: %s", portaAtual);
+
+                unsigned short port2;
+                char sendbuf2[101];
+                struct hostent *hostnm2;
+                struct sockaddr_in server2;
+                int s2;
+
+                hostnm2 = gethostbyname(ipAtual);
+                if (hostnm2 == (struct hostent *)0)
+                {
+                    fprintf(stderr, "Gethostbyname failed\n");
+                    exit(2);
+                }
+                port2 = (unsigned short)atoi(portaAtual);
+
+                /*
+                * Define o endere�o IP e a porta do servidor
+                */
+                server2.sin_family = AF_INET;
+                server2.sin_port = htons(port2);
+                server2.sin_addr.s_addr = *((unsigned long *)hostnm2->h_addr);
+
+                /*
+                * Cria um socket TCP (stream)
+                */
+                if ((s2 = socket(PF_INET, SOCK_STREAM, 0)) < 0)
+                {
+                    perror("Socket()");
+                    exit(3);
+                }
+
+                /* Estabelece conex�o com o servidor */
+                if (connect(s2, (struct sockaddr *)&server2, sizeof(server2)) < 0)
+                {
+                    perror("Connect()");
+                    exit(4);
+                }
+                char mensagem[100];
+                printf("\nMensagem: ");
+
+                fflush(stdin);
+                gets(mensagem);
+                fflush(stdin);
+
+                printf("Msg enviada: %s", mensagem);
+                if (send(s2, mensagem, strlen(mensagem) + 1, 0) < 0)
+                {
+                    perror("Send()");
+                    exit(5);
+                } //informa ao servidor o numero de telefone
+                close(s2);
             }
             break;
 
@@ -194,7 +301,22 @@ char **argv;
             break;
 
         case 3: // Registrar usuário
-            printf("Obrigado por utilizar a aplicacao\n");
+            printf("Nome do contato: ");
+            scanf("%s", &salvarNome);
+            printf("Telefone: ");
+            scanf("%s", &salvarTelefone);
+            arquivoContatos = fopen("contatos.dat", "ab");
+            if (!arquivoContatos)
+            {
+                printf("\nErro na abertura do arquivo.\n");
+            }
+            else
+            {
+                fwrite(&salvarNome, sizeof(salvarNome), 1, arquivoContatos);
+                fwrite(&salvarTelefone, sizeof(salvarTelefone), 1, arquivoContatos);
+                fclose(arquivoContatos);
+                printf("\nContato salvo com sucesso!\n");
+            }
             break;
         case 4: // Cria grupo
             break;
