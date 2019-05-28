@@ -12,13 +12,14 @@
 #include <string.h>
 #include <pthread.h>
 #include <arpa/inet.h>
+#define qtdTelefone 10
 
 //necessario salvar de alguma maneira os ips e portas dos cliente.
 struct cliente
 {
     unsigned short porta;
     char *ip;
-    char telefone[9];
+    char telefone[qtdTelefone];
     int id;
     struct cliente *prox;
 };
@@ -84,7 +85,7 @@ char **argv;
         }
 
         //receber telefone
-        int retorno = recv(ns, recvbuf, 10, 0); //recebe a mensagem do cliente e verifica o valor de retorno
+        int retorno = recv(ns, recvbuf, qtdTelefone, 0); //recebe a mensagem do cliente e verifica o valor de retorno
         if (retorno == -1)
         {
             perror("Recvbuf()");
@@ -143,7 +144,7 @@ void *servidor(int ns)
 {
     struct cliente *atual, *localizado, *this_client;
     int retorno;
-    char telefone_recebido[9];
+    char telefone_recebido[qtdTelefone];
     char sendbuf[101];
     char recvbuf[101];
     int id_this_thread = count_servers; //no momento que a função é chamada, recebe o count pra saber qual o "id" dela

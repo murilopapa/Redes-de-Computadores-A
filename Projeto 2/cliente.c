@@ -14,12 +14,14 @@
 #include <string.h>
 #include <pthread.h>
 #include <time.h>
+#define qtdTelefone 10
+
 
 // Structs
 struct contato
 {
     char nome[51];
-    char telefone[9];
+    char telefone[qtdTelefone];
     struct contato *prox;
 };
 
@@ -33,7 +35,7 @@ struct grupo
 struct mensagem
 {
     char mensagem[200];
-    char telefone[9];
+    char telefone[qtdTelefone];
     char nome[50];
     int leitura;
     struct mensagem *prox;
@@ -60,7 +62,7 @@ char **argv;
     FILE *arquivoContatos;
     FILE *arquivoGrupos;
     srand(time(NULL));
-    char telefone[9];
+    char telefone[qtdTelefone];
     unsigned short port;
     char sendbuf[101];
     char recvbuf[101];
@@ -75,11 +77,11 @@ char **argv;
     char envio[101]; // + o "#"
 
     // Variáveis para a opção 3
-    char salvarTelefone[9];
+    char salvarTelefone[qtdTelefone];
     char salvarNome[51];
     // Variaveis para a opcao 1
     char lerNome[51];
-    char lerTelefone[9];
+    char lerTelefone[qtdTelefone];
 
     /*
      * O primeiro argumento (argv[1]) � o hostname do servidor.
@@ -128,7 +130,7 @@ char **argv;
     fflush(stdin);
     gets(telefone);
     fflush(stdin);
-    if (send(s, telefone, 9, 0) < 0)
+    if (send(s, telefone, qtdTelefone, 0) < 0)
     {
         perror("Send()");
         exit(5);
@@ -211,7 +213,7 @@ char **argv;
         memset(mensagem, 0, sizeof(mensagem));
         memset(nome, 0, sizeof(nome));
         char op_rec[10];
-        char num_pesquisar[9];
+        char num_pesquisar[qtdTelefone];
         printf("\nSelecione a opção\n");
         printf("\n1) Usuários");
         printf("\n2) Grupos");
