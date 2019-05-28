@@ -34,6 +34,7 @@ struct mensagem
 {
     char mensagem[200];
     char telefone[9];
+    char nome[50];
     int leitura;
     struct mensagem *prox;
 };
@@ -41,6 +42,7 @@ struct mensagem
 //variaveis globais
 pthread_t thread_id;
 int porta;
+pthread_mutex_t mutex;
 struct contato *raiz_contato = NULL;
 struct grupo *raiz_grupo = NULL;
 struct mensagem *raiz_mensagem = NULL;
@@ -271,7 +273,7 @@ char **argv;
                 }
 
                 strcpy(num_pesquisar, aux1->telefone);
-                printf("Mandando msg para: %s\n", num_pesquisar);
+                //printf("Mandando msg para: %s\n", num_pesquisar);
 
                 if (send(s, num_pesquisar, sizeof(num_pesquisar), 0) < 0)
                 {
@@ -522,6 +524,26 @@ void *servidor()
         strcpy(novo->telefone, strtok(NULL, "$"));
         novo->leitura = 0;
         novo->prox = NULL;
+        strcpy(novo->nome, "");
+        struct contato *aux_contato;
+        aux_contato = raiz_contato;
+        /*if (aux_contato != NULL)
+        {
+            while (aux_contato->prox != NULL)
+            {
+                if (strcpy(aux_contato->telefone, novo->telefone) == 0)
+                {
+                    printf("\ncontato localizado\n");
+                    strcpy(novo->nome, aux_contato->nome);
+                }
+                aux = aux->prox;
+            }
+            if (strcpy(aux_contato->telefone, novo->telefone) == 0)
+            {
+                printf("\ncontato localizado\n");
+                strcpy(novo->nome, aux_contato->nome);
+            }
+        }*/
 
         if (raiz_mensagem == NULL)
         {

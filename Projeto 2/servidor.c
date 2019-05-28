@@ -34,7 +34,6 @@ pthread_t thread_id;
 int count_servers = 0;
 pthread_mutex_t mutex;
 struct cliente *raiz = NULL; //cria o primeiro elemento da lista dos cliente conectados
-
 /*
  * Servidor TCP
  */
@@ -90,13 +89,13 @@ char **argv;
         {
             perror("Recvbuf()");
             close(ns);
-            pthread_exit(NULL);
+            exit(5);
         }
         else if (retorno == 0)
         {
             printf("Thread encerrada pois o cliente foi fechado num momento inesperado\n");
             close(ns);
-            pthread_exit(NULL);
+            exit(5);
         }
         char telefone[10];
         strcpy(telefone, recvbuf);
@@ -106,38 +105,34 @@ char **argv;
         {
             perror("Recvbuf()");
             close(ns);
-            pthread_exit(NULL);
+            exit(5);
         }
         else if (retorno == 0)
         {
             printf("Thread encerrada pois o cliente foi fechado num momento inesperado\n");
             close(ns);
-            pthread_exit(NULL);
+            exit(5);
         }
 
         int porta = atoi(recvbuf);
         unsigned short porta_cliente = (unsigned short)porta;
-        printf("\nPORTA RECEBIDA: %d\n", porta);
-        //salvar na lista ligada.
-        //abre semaforo
 
         char *ip_consultado;
         ip_consultado = inet_ntoa(client.sin_addr);
 
-        //printf("\nIP CONVERTIDO: %s\n", ip_consultado);
+        pthread_mutex_lock(&mutex);
         if (inserir_cliente(telefone, porta_cliente, ip_consultado) == -1)
         {
             printf("ERRO: não foi possivel incluir o elemento na lista ligada.\n");
             //tratar melhor esse erro
         }
-        //fecha semaforo
+        pthread_mutex_unlock(&mutex);
 
         if (pthread_create(&thread_id, NULL, servidor, (void *)ns))
         {
             printf("ERRO: impossivel criar uma thread\n");
             exit(-1);
         }
-        //pthread_detach(thread_id);
     }
 
     printf("Servidor terminou com sucesso.\n");
@@ -167,21 +162,11 @@ void *servidor(int ns)
     {
         this_client = atual;
     }
-    /*
-    O servidor deve aguardar por requisições de conexão enviadas pelos cliente, os cliente informarao o numero para o qual eles desejam saber o ip e porta.
-    O servidor responderá com o Ip e porta.
-    */
-
     printf("\n[%s] Thread criada com sucesso\n", this_client->telefone);
     while (1)
     {
-        /*A troca de mensagens baseadas entre o cliente e o servidor
-        serao apenas do tipo: Numero tal esta online?, e a resposta sera sim ou nao
-        se for sim, mandar o ip e a porta
-        */
         //a msg que recebe, é o telefone que quer verificar
         retorno = recv(ns, recvbuf, sizeof(recvbuf), 0); //recebe a mensagem do cliente e verifica o valor de retorno
-
         if (retorno == -1)
         {
             perror("Recvbuf()");
@@ -232,9 +217,6 @@ void *servidor(int ns)
         }
         else
         {
-            //envia 0, ou "offline", falando que o cliente procurado nao esta online
-            //offline tem 7 letras, +\n tem 8
-            //n sei se é 7 ou 8 que tem que colocar, tem que testar
             if (send(ns, "offline", 7, 0) < 0)
             {
                 perror("Send()");
