@@ -16,7 +16,6 @@
 #include <time.h>
 #define qtdTelefone 10
 
-
 // Structs
 struct contato
 {
@@ -428,13 +427,27 @@ char **argv;
                 {
                     if (aux->leitura == 0)
                     {
-                        printf("*NOVA*[%s] - %s\n", aux->telefone, aux->mensagem);
+                        if (strcmp(aux->nome, "") == 0)
+                        {
+                            printf("*NOVA*[%s] - %s\n", aux->telefone, aux->mensagem);
+                        }
+                        else
+                        {
+                            printf("*NOVA*[%s] - %s\n", aux->nome, aux->mensagem);
+                        }
                         aux->leitura = 1;
                         aux = aux->prox;
                     }
                     else
                     {
-                        printf("[%s] - %s\n", aux->telefone, aux->mensagem);
+                        if (strcmp(aux->nome, "") == 0)
+                        {
+                            printf("[%s] - %s\n", aux->telefone, aux->mensagem);
+                        }
+                        else
+                        {
+                            printf("[%s] - %s\n", aux->nome, aux->mensagem);
+                        }
                         aux = aux->prox;
                     }
                 }
@@ -529,24 +542,32 @@ void *servidor()
         strcpy(novo->nome, "");
         struct contato *aux_contato;
         aux_contato = raiz_contato;
-        printf("\nMSG RECEBIDA: %s\n", novo->mensagem);
-        /*if (aux_contato != NULL)
+        if (aux_contato != NULL)
         {
             while (aux_contato->prox != NULL)
             {
                 if (strcmp(aux_contato->telefone, novo->telefone) == 0)
                 {
-                    printf("\ncontato localizado\n");
                     strcpy(novo->nome, aux_contato->nome);
                 }
-                aux = aux->prox;
+                aux_contato = aux_contato->prox;
             }
             if (strcmp(aux_contato->telefone, novo->telefone) == 0)
             {
-                printf("\ncontato localizado\n");
                 strcpy(novo->nome, aux_contato->nome);
             }
-        }*/
+        }
+
+        if (strcmp(novo->nome, "") == 0)
+        {
+            printf("\n[%s] - %s\n", novo->telefone, novo->mensagem);
+            printf("Opção: ");
+        }
+        else
+        {
+            printf("\n[%s] - %s\n", novo->nome, novo->mensagem);
+            printf("Opção: ");
+        }
 
         if (raiz_mensagem == NULL)
         {
