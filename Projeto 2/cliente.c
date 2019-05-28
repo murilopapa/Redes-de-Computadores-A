@@ -529,18 +529,19 @@ void *servidor()
         strcpy(novo->nome, "");
         struct contato *aux_contato;
         aux_contato = raiz_contato;
+        printf("\nMSG RECEBIDA: %s\n", novo->mensagem);
         /*if (aux_contato != NULL)
         {
             while (aux_contato->prox != NULL)
             {
-                if (strcpy(aux_contato->telefone, novo->telefone) == 0)
+                if (strcmp(aux_contato->telefone, novo->telefone) == 0)
                 {
                     printf("\ncontato localizado\n");
                     strcpy(novo->nome, aux_contato->nome);
                 }
                 aux = aux->prox;
             }
-            if (strcpy(aux_contato->telefone, novo->telefone) == 0)
+            if (strcmp(aux_contato->telefone, novo->telefone) == 0)
             {
                 printf("\ncontato localizado\n");
                 strcpy(novo->nome, aux_contato->nome);
