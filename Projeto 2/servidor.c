@@ -13,6 +13,7 @@
 #include <pthread.h>
 #include <arpa/inet.h>
 #define qtdTelefone 10
+#define tamanhoBuffer 101
 
 //necessario salvar de alguma maneira os ips e portas dos cliente.
 struct cliente
@@ -44,7 +45,7 @@ char **argv;
     unsigned short port;
     struct sockaddr_in client;
     struct sockaddr_in server;
-    char recvbuf[101];
+    char recvbuf[tamanhoBuffer];
     int s;  /* Socket para aceitar conex�es       */
     int ns; /* Socket conectado ao cliente        */
 
@@ -98,7 +99,7 @@ char **argv;
             close(ns);
             exit(5);
         }
-        char telefone[10];
+        char telefone[qtdTelefone];
         strcpy(telefone, recvbuf);
 
         retorno = recv(ns, recvbuf, 5, 0); //recebe a mensagem do cliente e verifica o valor de retorno
@@ -145,8 +146,8 @@ void *servidor(int ns)
     struct cliente *atual, *localizado, *this_client;
     int retorno;
     char telefone_recebido[qtdTelefone];
-    char sendbuf[101];
-    char recvbuf[101];
+    char sendbuf[tamanhoBuffer];
+    char recvbuf[tamanhoBuffer];
     int id_this_thread = count_servers; //no momento que a função é chamada, recebe o count pra saber qual o "id" dela
     count_servers++;
 

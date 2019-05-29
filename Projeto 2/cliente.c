@@ -15,18 +15,20 @@
 #include <pthread.h>
 #include <time.h>
 #define qtdTelefone 10
+#define qtdNome 51
+#define tamanhoBuffer 101
 
 // Structs
 struct contato
 {
-    char nome[51];
+    char nome[qtdNome];
     char telefone[qtdTelefone];
     struct contato *prox;
 };
 
 struct grupo
 {
-    char nome[51];
+    char nome[qtdNome];
     struct contato *raiz;
     struct grupo *prox;
 };
@@ -35,7 +37,7 @@ struct mensagem
 {
     char mensagem[200];
     char telefone[qtdTelefone];
-    char nome[50];
+    char nome[qtdNome];
     int leitura;
     struct mensagem *prox;
 };
@@ -63,8 +65,8 @@ char **argv;
     srand(time(NULL));
     char telefone[qtdTelefone];
     unsigned short port;
-    char sendbuf[101];
-    char recvbuf[101];
+    char sendbuf[tamanhoBuffer];
+    char recvbuf[tamanhoBuffer];
     char ipAtual[16];
     char portaAtual[5];
     struct hostent *hostnm;
@@ -73,13 +75,13 @@ char **argv;
 
     char mensagem[80];
     char nome[20];
-    char envio[101]; // + o "#"
+    char envio[tamanhoBuffer]; // + o "#"
 
     // Variáveis para a opção 3
     char salvarTelefone[qtdTelefone];
-    char salvarNome[51];
+    char salvarNome[qtdNome];
     // Variaveis para a opcao 1
-    char lerNome[51];
+    char lerNome[qtdNome];
     char lerTelefone[qtdTelefone];
 
     /*
@@ -211,7 +213,7 @@ char **argv;
         memset(sendbuf, 0, sizeof(sendbuf));
         memset(mensagem, 0, sizeof(mensagem));
         memset(nome, 0, sizeof(nome));
-        char op_rec[10];
+        char op_rec[qtdTelefone];
         char num_pesquisar[qtdTelefone];
         printf("\nSelecione a opção\n");
         printf("\n1) Usuários");
@@ -308,7 +310,7 @@ char **argv;
                     //printf("Porta atual: %s", portaAtual);
 
                     unsigned short port2;
-                    char sendbuf2[101];
+                    char sendbuf2[tamanhoBuffer];
                     struct hostent *hostnm2;
                     struct sockaddr_in server2;
                     int s2;
@@ -343,7 +345,7 @@ char **argv;
                         perror("Connect()");
                         exit(4);
                     }
-                    char mensagem[100];
+                    char mensagem[100];// nao eh 101? Se sim, substituir por tamanhoBuffer
                     printf("\nMensagem: ");
 
                     fflush(stdin);
@@ -429,7 +431,7 @@ char **argv;
                     {
                         if (strcmp(aux->nome, "") == 0)
                         {
-                            printf("*NOVA*[%s] - %s\n", aux->telefone, aux->mensagem);
+                            printf("*NOVA*[%s] - %s\n", aux->nome, aux->mensagem);
                         }
                         else
                         {
@@ -442,7 +444,7 @@ char **argv;
                     {
                         if (strcmp(aux->nome, "") == 0)
                         {
-                            printf("[%s] - %s\n", aux->telefone, aux->mensagem);
+                            printf("[%s] - %s\n", aux->nome, aux->mensagem);
                         }
                         else
                         {
@@ -453,12 +455,12 @@ char **argv;
                 }
                 if (aux->leitura == 0)
                 {
-                    printf("*NOVA*[%s] - %s\n", aux->telefone, aux->mensagem);
+                    printf("*NOVA*[%s] - %s\n", aux->nome, aux->mensagem);
                     aux->leitura = 1;
                 }
                 else
                 {
-                    printf("[%s] - %s\n", aux->telefone, aux->mensagem);
+                    printf("[%s] - %s\n", aux->nome, aux->mensagem);
                 }
             }
             break;
@@ -483,7 +485,7 @@ void *servidor()
 
     struct sockaddr_in client;
     struct sockaddr_in server;
-    char recvbuf[101];
+    char recvbuf[tamanhoBuffer];
     int s;  /* Socket para aceitar conex�es       */
     int ns; /* Socket conectado ao cliente        */
 
@@ -560,7 +562,7 @@ void *servidor()
 
         if (strcmp(novo->nome, "") == 0)
         {
-            printf("\n[%s] - %s\n", novo->telefone, novo->mensagem);
+            printf("\n[%s] - %s\n", novo->nome, novo->mensagem);
             printf("Opção: ");
         }
         else
