@@ -420,6 +420,7 @@ char **argv;
             strcat(mensagem, "$");
             while (aux_print->raiz)
             {
+                
                 strcpy(num_pesquisar, aux_print->raiz->telefone);
                 //printf("Mandando msg para: %s\n", num_pesquisar);
 
@@ -448,6 +449,7 @@ char **argv;
                 }
                 else
                 {
+                    printf("\nCliente online\n");
                     strcpy(ipAtual, strtok(recvbuf, "+"));
                     strcpy(portaAtual, strtok(NULL, "$"));
 
@@ -499,7 +501,7 @@ char **argv;
                     close(s2);
                 }
                 aux_print->raiz = aux_print->raiz->prox;
-                printf("\nmsg enviada(ou nao) : %s\n", mensagem);
+                memset(recvbuf, 0, sizeof(recvbuf));
             }
             aux_print->raiz = aux_contato1;
             break;
