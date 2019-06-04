@@ -611,6 +611,7 @@ char **argv;
                     }
                     struct contato *copia_contato = (struct contato *)malloc(sizeof(struct contato));
                     struct grupo *aux_grupo2;
+                    struct contato *aux_loc;
                     strcpy(salvarNome, aux1->nome);
                     strcpy(copia_contato->nome, salvarNome);
                     strcpy(salvarTelefone, aux1->telefone);
@@ -620,6 +621,7 @@ char **argv;
                     if (novo_grupo->raiz == NULL)
                     {
                         novo_grupo->raiz = copia_contato;
+                        aux_loc = copia_contato;
                     }
                     else
                     {
@@ -629,10 +631,12 @@ char **argv;
                             aux_grupo2->raiz = aux_grupo2->raiz->prox;
                         }
                         aux_grupo2->raiz->prox = copia_contato;
+
+                        novo_grupo->raiz = aux_loc;
                     }
                 }
             } while (insereUsuarioGrupoInt != -1);
-
+            
             //novo grupo feito
 
             break;
@@ -651,7 +655,7 @@ char **argv;
                     {
                         if (strcmp(aux->nome, "") == 0)
                         {
-                            printf("*NOVA*[%s] - %s\n", aux->nome, aux->mensagem);
+                            printf("*NOVA*[%s] - %s\n", aux->telefone, aux->mensagem);
                         }
                         else
                         {
@@ -664,7 +668,7 @@ char **argv;
                     {
                         if (strcmp(aux->nome, "") == 0)
                         {
-                            printf("[%s] - %s\n", aux->nome, aux->mensagem);
+                            printf("[%s] - %s\n", aux->telefone, aux->mensagem);
                         }
                         else
                         {
@@ -782,7 +786,7 @@ void *servidor()
 
         if (strcmp(novo->nome, "") == 0)
         {
-            printf("\n[%s] - %s\n", novo->nome, novo->mensagem);
+            printf("\n[%s] - %s\n", novo->telefone, novo->mensagem);
             printf("Opção: ");
         }
         else
