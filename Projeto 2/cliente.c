@@ -26,6 +26,13 @@ struct contato
     struct contato *prox;
 };
 
+struct contatosGrupo
+{
+    char nome[qtdNome];
+    char telefone[qtdTelefone];
+    struct contato *prox;
+};
+
 struct grupo
 {
     char nome[qtdNome];
@@ -83,6 +90,8 @@ char **argv;
     // Variaveis para a opcao 1
     char lerNome[qtdNome];
     char lerTelefone[qtdTelefone];
+    //Variaveis para a opcao 4
+    char salvarNomeGrupo[qtdNome];
 
     /*
      * O primeiro argumento (argv[1]) � o hostname do servidor.
@@ -345,7 +354,7 @@ char **argv;
                         perror("Connect()");
                         exit(4);
                     }
-                    char mensagem[100];// nao eh 101? Se sim, substituir por tamanhoBuffer
+                    char mensagem[100]; // nao eh 101? Se sim, substituir por tamanhoBuffer
                     printf("\nMensagem: ");
 
                     fflush(stdin);
@@ -415,6 +424,92 @@ char **argv;
             }
             break;
         case 4: // Cria grupo
+            printf("Digite o nome do grupo: ");
+            fflush(stdin);
+            gets(salvarNomeGrupo);
+            fflush(stdin);
+            //Cria o grupo na Lista
+            struct grupo *aux_grupo;
+            struct grupo *novo_grupo = (struct grupo *)malloc(sizeof(struct grupo));
+
+            strcpy(novo_grupo->nome, salvarNomeGrupo);
+            novo_grupo->prox = NULL;
+            novo_grupo->raiz = NULL;
+
+            if (raiz_grupo == NULL)
+            {
+                raiz_grupo = novo_grupo;
+            }
+            else
+            {
+                aux_grupo = raiz_grupo;
+                while (aux_grupo->prox)
+                {
+                    aux_grupo = aux_grupo->prox;
+                }
+                aux_grupo->prox = novo_grupo;
+            }
+            printf("\nCRIOU O GRUPO\n\n");
+            char insereUsuarioGrupo[10];
+            int insereUsuarioGrupoInt;
+            do
+            {
+                struct contato *aux1;
+                int count = 0;
+                aux1 = raiz_contato;
+                if (aux1 == NULL)
+                {
+                    printf("\nSem contatos salvos!\n");
+                }
+                else
+                {
+                    while (aux1->prox != NULL)
+                    {
+                        printf("%d) NOME: %s - TELEFONE: %s\n", count, aux1->nome, aux1->telefone);
+                        aux1 = aux1->prox;
+                        count++;
+                    }
+                    printf("%d) NOME: %s - TELEFONE: %s\n", count, aux1->nome, aux1->telefone);
+                }
+                printf("Deseja inserir mais algum usuario? '-1' para sair\n");
+                fflush(stdin);
+                gets(insereUsuarioGrupo);
+                fflush(stdin);
+                insereUsuarioGrupoInt = atoi(insereUsuarioGrupo);
+                //se ele quer inserir mais um usuario
+                if (insereUsuarioGrupoInt != -1)
+                {
+                    aux1 = raiz_contato;
+                    for (int i = 0; i < insereUsuarioGrupoInt; i++)
+                    {
+                        aux1 = aux1->prox;
+                    }
+                    struct contato *copia_contato = (struct contato *)malloc(sizeof(struct contato));
+                    struct grupo *aux_grupo2;
+                    strcpy(salvarNome, aux1->nome);
+                    strcpy(copia_contato->nome, salvarNome);
+                    strcpy(salvarTelefone, aux1->telefone);
+                    strcpy(copia_contato->telefone, salvarTelefone);
+                    copia_contato->prox = NULL;
+
+                    if (novo_grupo->raiz == NULL)
+                    {
+                        novo_grupo->raiz = copia_contato;
+                    }
+                    else
+                    {
+                        aux_grupo2 = novo_grupo;
+                        while (aux_grupo2->raiz->prox != NULL)
+                        {
+                            aux_grupo2->raiz = aux_grupo2->raiz->prox;
+                        }
+                        aux_grupo2->raiz->prox = copia_contato;
+                    }
+                }
+            } while (insereUsuarioGrupoInt != -1);
+
+            //novo grupo feito
+
             break;
         case 5: // Ler msg
             printf("\n TODAS AS MENSAGENS\n");
@@ -465,6 +560,23 @@ char **argv;
             }
             break;
         case 6: // Sair
+            break;
+
+        case 7:
+            printf("GRUPOS:\n");
+            struct grupo *aux_print = (struct grupo *)malloc(sizeof(struct grupo));
+            aux_print = raiz_grupo;
+            while (aux_print)
+            {
+                printf("Nome Grupo: %s\n", aux_print->nome);
+                printf("INTEGRANTES:\n");
+                while (aux_print->raiz)
+                {
+                    printf("- Nome: %s\n", aux_print->raiz->nome);
+                    aux_print->raiz = aux_print->raiz->prox;
+                }
+                aux_print = aux_print->prox;
+            }
             break;
         default:
             printf("Opcao Inválida!\n");
