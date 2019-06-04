@@ -377,7 +377,131 @@ char **argv;
 
         case 2:
             // envia pra grupo
+            printf("GRUPOS:\n");
+            struct grupo *aux_print;
+            struct contato *aux_contato1;
+            int count_grupo = 1;
+            char opcao_grupo[2];
+            int opcao_grupo_int;
+            aux_print = raiz_grupo;
+            while (aux_print)
+            {
+                printf("%d) Nome Grupo: %s\n", count_grupo, aux_print->nome);
+                count_grupo++;
+                printf("INTEGRANTES:\n");
+                aux_contato1 = aux_print->raiz;
+                while (aux_print->raiz)
+                {
+                    printf("- Nome: %s\n", aux_print->raiz->nome);
+                    aux_print->raiz = aux_print->raiz->prox;
+                }
+                printf("\n");
+                aux_print->raiz = aux_contato1;
+                aux_print = aux_print->prox;
+            }
+            fflush(stdin);
+            gets(opcao_grupo);
+            fflush(stdin);
+            opcao_grupo_int = atoi(opcao_grupo);
+            aux_print = raiz_grupo;
+            for (int i = 1; i < opcao_grupo_int; i++)
+            {
+                aux_print = aux_print->prox;
+            }
+            char mensagem[100]; // nao eh 101? Se sim, substituir por tamanhoBuffer
+            printf("\nMensagem: ");
 
+            fflush(stdin);
+            gets(mensagem);
+            fflush(stdin);
+            //printf("Msg enviada: %s", mensagem);
+            strcat(mensagem, "&");
+            strcat(mensagem, telefone);
+            strcat(mensagem, "$");
+            while (aux_print->raiz)
+            {
+                strcpy(num_pesquisar, aux_print->raiz->telefone);
+                //printf("Mandando msg para: %s\n", num_pesquisar);
+
+                if (send(s, num_pesquisar, sizeof(num_pesquisar), 0) < 0)
+                {
+                    perror("Send()");
+                    exit(5);
+                }
+                int retorno = recv(s, recvbuf, sizeof(recvbuf), 0); //recebe a mensagem do cliente e verifica o valor de retorno
+
+                if (retorno == -1)
+                {
+                    perror("Recvbuf()");
+                    close(s);
+                    exit(1);
+                }
+                else if (retorno == 0)
+                {
+                    printf("thread encerrada pois o cliente foi fechado num momento inesperado\n");
+                    close(s);
+                    exit(1);
+                }
+                if (strcmp("offline", recvbuf) == 0)
+                {
+                    printf("\nCliente offline\n");
+                }
+                else
+                {
+                    strcpy(ipAtual, strtok(recvbuf, "+"));
+                    strcpy(portaAtual, strtok(NULL, "$"));
+
+                    //printf("Ip atual: %s\n", recvbuf);
+                    //printf("Porta atual: %s", portaAtual);
+
+                    unsigned short port2;
+                    char sendbuf2[tamanhoBuffer];
+                    struct hostent *hostnm2;
+                    struct sockaddr_in server2;
+                    int s2;
+
+                    hostnm2 = gethostbyname(ipAtual);
+                    if (hostnm2 == (struct hostent *)0)
+                    {
+                        fprintf(stderr, "Gethostbyname failed\n");
+                        exit(2);
+                    }
+                    port2 = (unsigned short)atoi(portaAtual);
+
+                    /*
+                * Define o endere�o IP e a porta do servidor
+                */
+                    server2.sin_family = AF_INET;
+                    server2.sin_port = htons(port2);
+                    server2.sin_addr.s_addr = *((unsigned long *)hostnm2->h_addr);
+
+                    /*
+                * Cria um socket TCP (stream)
+                */
+                    if ((s2 = socket(PF_INET, SOCK_STREAM, 0)) < 0)
+                    {
+                        perror("Socket()");
+                        exit(3);
+                    }
+
+                    /* Estabelece conex�o com o servidor */
+                    if (connect(s2, (struct sockaddr *)&server2, sizeof(server2)) < 0)
+                    {
+                        perror("Connect()");
+                        exit(4);
+                    }
+
+                    if (send(s2, mensagem, strlen(mensagem) + 1, 0) < 0)
+                    {
+                        perror("Send()");
+                        exit(5);
+                    } //informa ao servidor o numero de telefone
+                    close(s2);
+                }
+                aux_print->raiz = aux_print->raiz->prox;
+                printf("\nmsg enviada(ou nao) : %s\n", mensagem);
+            }
+            aux_print->raiz = aux_contato1;
             break;
 
         case 3: // Registrar usuário
@@ -460,6 +584,7 @@ char **argv;
                 if (aux1 == NULL)
                 {
                     printf("\nSem contatos salvos!\n");
+                    break;
                 }
                 else
                 {
@@ -560,23 +685,6 @@ char **argv;
             }
             break;
         case 6: // Sair
-            break;
-
-        case 7:
-            printf("GRUPOS:\n");
-            struct grupo *aux_print = (struct grupo *)malloc(sizeof(struct grupo));
-            aux_print = raiz_grupo;
-            while (aux_print)
-            {
-                printf("Nome Grupo: %s\n", aux_print->nome);
-                printf("INTEGRANTES:\n");
-                while (aux_print->raiz)
-                {
-                    printf("- Nome: %s\n", aux_print->raiz->nome);
-                    aux_print->raiz = aux_print->raiz->prox;
-                }
-                aux_print = aux_print->prox;
-            }
             break;
         default:
             printf("Opcao Inválida!\n");
