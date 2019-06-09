@@ -26,13 +26,6 @@ struct contato
     struct contato *prox;
 };
 
-struct contatosGrupo
-{
-    char nome[qtdNome];
-    char telefone[qtdTelefone];
-    struct contato *prox;
-};
-
 struct grupo
 {
     char nome[qtdNome];
@@ -92,6 +85,7 @@ char **argv;
     char lerTelefone[qtdTelefone];
     //Variaveis para a opcao 4
     char salvarNomeGrupo[qtdNome];
+    char lerNomeGrupo[qtdNome];
 
     /*
      * O primeiro argumento (argv[1]) � o hostname do servidor.
@@ -165,9 +159,14 @@ char **argv;
     } //informa ao servidor o numero de telefone
 
     char nome_arquivo_contatos[50];
+    char nome_arquivo_grupos[50];
     strcpy(nome_arquivo_contatos, "contatos_");
     strcat(nome_arquivo_contatos, telefone);
     strcat(nome_arquivo_contatos, ".dat");
+
+    strcpy(nome_arquivo_grupos, "grupos_");
+    strcat(nome_arquivo_grupos, telefone);
+    strcat(nome_arquivo_grupos, ".dat");
 
     arquivoContatos = fopen(nome_arquivo_contatos, "ab");
     if (!arquivoContatos)
@@ -213,6 +212,84 @@ char **argv;
             }
         }
         fclose(arquivoContatos);
+    }
+
+    // ABRE ARQUIVO GRUPO
+    arquivoGrupos = fopen(nome_arquivo_grupos, "ab");
+    if (!arquivoGrupos)
+    {
+        printf("\nErro na abertura do arquivo.\n");
+    }
+    else
+    {
+        fclose(arquivoGrupos);
+    }
+
+    arquivoGrupos = fopen(nome_arquivo_grupos, "rb");
+    if (!arquivoGrupos)
+    {
+        printf("\nErro na abertura do arquivo.\n");
+    }
+    else
+    {
+        printf("\n");
+        struct grupo *aux_grupo5;
+        struct grupo abre_arquivo;
+        struct contato abre_arquivo1;
+        struct contato aux_arquivo;
+        int auxQtd2 = 0;
+        while (fread(&salvarNomeGrupo, sizeof(salvarNomeGrupo), 1, arquivoGrupos) != 0)
+        {
+            struct grupo *novo_grupo_arquivo = (struct grupo *)malloc(sizeof(struct grupo));
+            novo_grupo_arquivo->prox = NULL;
+            novo_grupo_arquivo->raiz = NULL;
+            strcpy(novo_grupo_arquivo->nome, salvarNomeGrupo);
+            if (raiz_grupo == NULL)
+            {
+                raiz_grupo = novo_grupo_arquivo;
+            }
+            else
+            {
+                aux_grupo5 = raiz_grupo;
+                while (aux_grupo5->prox != NULL)
+                {
+                    aux_grupo5 = aux_grupo5->prox;
+                }
+                aux_grupo5->prox = novo_grupo_arquivo;
+                novo_grupo_arquivo->prox = NULL;
+            }
+            fread(&auxQtd2, sizeof(auxQtd2), 1, arquivoGrupos);
+            for (int i = 0; i < auxQtd2; i++)
+            {
+                fread(&aux_arquivo, sizeof(aux_arquivo), 1, arquivoGrupos);
+                struct contato *copia_contato1 = (struct contato *)malloc(sizeof(struct contato));
+                struct grupo *aux_grupo3;
+                struct contato *aux_loc3;
+                strcpy(salvarNome, aux_arquivo.nome);
+                strcpy(copia_contato1->nome, salvarNome);
+                strcpy(salvarTelefone, aux_arquivo.telefone);
+                strcpy(copia_contato1->telefone, salvarTelefone);
+                copia_contato1->prox = NULL;
+
+                if (novo_grupo_arquivo->raiz == NULL)
+                {
+                    novo_grupo_arquivo->raiz = copia_contato1;
+                    aux_loc3 = copia_contato1;
+                }
+                else
+                {
+                    aux_grupo3 = novo_grupo_arquivo;
+                    while (aux_grupo3->raiz->prox != NULL)
+                    {
+                        aux_grupo3->raiz = aux_grupo3->raiz->prox;
+                    }
+                    aux_grupo3->raiz->prox = copia_contato1;
+
+                    novo_grupo_arquivo->raiz = aux_loc3;
+                }
+            }
+        }
+        fclose(arquivoGrupos);
     }
 
     int op;
@@ -420,7 +497,7 @@ char **argv;
             strcat(mensagem, "$");
             while (aux_print->raiz)
             {
-                
+
                 strcpy(num_pesquisar, aux_print->raiz->telefone);
                 //printf("Mandando msg para: %s\n", num_pesquisar);
 
@@ -557,7 +634,7 @@ char **argv;
             //Cria o grupo na Lista
             struct grupo *aux_grupo;
             struct grupo *novo_grupo = (struct grupo *)malloc(sizeof(struct grupo));
-
+            int auxQtd = 0;
             strcpy(novo_grupo->nome, salvarNomeGrupo);
             novo_grupo->prox = NULL;
             novo_grupo->raiz = NULL;
@@ -606,6 +683,7 @@ char **argv;
                 //se ele quer inserir mais um usuario
                 if (insereUsuarioGrupoInt != -1)
                 {
+                    auxQtd++;
                     aux1 = raiz_contato;
                     for (int i = 0; i < insereUsuarioGrupoInt; i++)
                     {
@@ -638,9 +716,37 @@ char **argv;
                     }
                 }
             } while (insereUsuarioGrupoInt != -1);
-            
-            //novo grupo feito
 
+            //arquivo grupo
+            arquivoGrupos = fopen(nome_arquivo_grupos, "ab");
+            if (!arquivoGrupos)
+            {
+                printf("\nErro na abertura do arquivo.\n");
+            }
+            else
+            {
+                struct grupo *aux_grupo3;
+                struct contato *aux_loc2;
+                struct contato salvaContato;
+                strcpy(salvarNomeGrupo, novo_grupo->nome);
+                fwrite(&salvarNomeGrupo, sizeof(salvarNomeGrupo), 1, arquivoGrupos);
+                fwrite(&auxQtd, sizeof(auxQtd), 1, arquivoGrupos);
+                aux_grupo3 = novo_grupo;
+                aux_loc2 = novo_grupo->raiz;
+                while (aux_grupo3->raiz->prox != NULL)
+                {
+                    strcpy(salvaContato.nome, novo_grupo->raiz->nome);
+                    strcpy(salvaContato.telefone, novo_grupo->raiz->telefone);
+                    fwrite(&salvaContato, sizeof(salvaContato), 1, arquivoGrupos);
+                    aux_grupo3->raiz = aux_grupo3->raiz->prox;
+                }
+                strcpy(salvaContato.nome, novo_grupo->raiz->nome);
+                strcpy(salvaContato.telefone, novo_grupo->raiz->telefone);
+                fwrite(&salvaContato, sizeof(salvaContato), 1, arquivoGrupos);
+                novo_grupo->raiz = aux_loc2;
+                fclose(arquivoGrupos);
+                printf("\nGrupo salvo com sucesso!\n");
+            }
             break;
         case 5: // Ler msg
             printf("\n TODAS AS MENSAGENS\n");
