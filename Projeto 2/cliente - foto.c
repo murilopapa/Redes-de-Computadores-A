@@ -345,7 +345,7 @@ char **argv;
 
                 char opcao[10];
                 int opcao_int = 0;
-                int tam;
+               	int tam;
                 char cabecalho[15];
                 char cabecalho_foto[15];
                 do
@@ -373,6 +373,7 @@ char **argv;
                     perror("Send()");
                     exit(5);
                 }
+                //printf("num recebido\n");
                 int retorno = recv(s, recvbuf, sizeof(recvbuf), 0); //recebe a mensagem do cliente e verifica o valor de retorno
 
                 if (retorno == -1)
@@ -393,6 +394,7 @@ char **argv;
                 }
                 else
                 {
+                	//printf("recebeu ok o ip e porta\n");
                     strcpy(ipAtual, strtok(recvbuf, "+"));
                     strcpy(portaAtual, strtok(NULL, "$"));
 
@@ -437,6 +439,7 @@ char **argv;
                     }
                     char mensagem[100]; // nao eh 101? Se sim, substituir por tamanhoBuffer
                     int op_msg = 0;
+                    //printf("conexao ok\n");
                     do{
                     printf("Deseja enviar: \n 1 - Texto\n 2 - Imagem\n");
                     scanf("%d", &op_msg);
@@ -446,15 +449,17 @@ char **argv;
                     {
                     	tam = strlen(mensagem);
                     	strcat(cabecalho, "txt&");
-                    	strcat(cabecalho, itoa(tam));
+                    	strcat(cabecalho, "teste");
                     	strcat(cabecalho, "&");
 	                    //printf("Msg enviada: %s", mensagem);
-	                    strcat(mensagem, cabecalho);
+	                    strcpy(mensagem, cabecalho);	//insere o cabecalho na msg NAO ta funcionando (talvez seja o nome mensagem o prob)
 	                    printf("\nMensagem: ");
 
+	                    fflush(stdin);
+                    	gets(mensagem);	//passando reto nao sei pq
                     	fflush(stdin);
-                    	gets(mensagem);
-                    	fflush(stdin);
+
+                    	printf("conteudo msg: %s\n",mensagem);
 
     	                strcat(mensagem, "&");
         	            strcat(mensagem, telefone);
@@ -471,11 +476,12 @@ char **argv;
                 		char path[50];
                 		int tamanho_foto;
                 		char * buffer_foto;
-                		char cabecalho_foto[15];
                 		char extensao_foto[3];
 						
 						printf("digite o nome do arquivo que deseja abrir: ");
+						fflush(stdin);
 						gets(path);
+						fflush(stdin);
 
 						foto = fopen(path, "rb");
 						fseek(foto, 0L, SEEK_END);	//acha o fim do arquivo
@@ -491,10 +497,11 @@ char **argv;
 
 						strcat(extensao_foto, buffer_foto);
 						strcat("&", buffer_foto);
-						strcat(itoa(tamanho_foto), buffer_foto);
+						sprintf(buffer_foto, "%d", tamanho_foto);
 						strcat("&", buffer_foto);
 						strcat(buffer_foto,"&");
 						strcat(telefone,"$");	//modelo: png&126371&conteudo&telefone$
+						fclose(foto);
 
                 	}
                 }
@@ -864,7 +871,7 @@ void *servidor()
 {
 	FILE * foto_convertida;
     unsigned short port;
-
+    char * buffer_recebimento;
     struct sockaddr_in client;
     struct sockaddr_in server;
     char recvbuf[tamanhoBuffer];
@@ -899,37 +906,68 @@ void *servidor()
     	char tamanho_msg[15];
         struct mensagem *novo = (struct mensagem *)malloc(sizeof(struct mensagem));
         struct mensagem *aux;
+        char * nome_arquivo_foto = "output.";
         int namelen = sizeof(client);
         if ((ns = accept(s, (struct sockaddr *)&client, &namelen)) == -1)
         {
             perror("Accept()");
             exit(5);
         }
+        int count_tamanho = 0;
         //receber msg
-        int retorno = recv(ns, recvbuf, sizeof(recvbuf), 0); //recebe a mensagem do cliente e verifica o valor de retorno
-        if (retorno == -1)
-        {
-            perror("Recvbuf()");
-            close(ns);
-            pthread_exit(NULL);
+        
+
+	    int retorno = recv(ns, recvbuf, sizeof(recvbuf), 0); //recebe a mensagem do cliente e verifica o valor de retorno
+    	if (retorno == -1)
+	    {
+         	perror("Recvbuf()");
+	        close(ns);
+    	    pthread_exit(NULL);
         }
         else if (retorno == 0)
-        {
-            printf("Thread encerrada pois o cliente foi fechado num momento inesperado\n");
+	    {
+    	    printf("Thread encerrada pois o cliente foi fechado num momento inesperado\n");
             close(ns);
-            pthread_exit(NULL);
-        }
-        //do while para garantir o recebimento da mensagem completa
+           	pthread_exit(NULL);
+	    }
+
+    	//do while para garantir o recebimento da mensagem completa
         //possivel solucao: a cada iteracao copiar recvbuf pra uma string de tamanho = tamanho_msg
-        
         strcpy(tipo_msg, strtok(recvbuf, "&"));	//salva em tipo_msg tudo que ha antes do &
         strcpy(tamanho_msg, strtok(recvbuf, "&"));//salva em tamanho_msg tudo que ha antes do &
+        buffer_recebimento = (char *)malloc(atoi(tamanho_msg));
+        strcat(buffer_recebimento, recvbuf);
+        long tamanho_msg_int = 0;
+        tamanho_msg_int = atoi(tamanho_msg);
+        printf("tamanho msg = %d\n", tamanho_msg);
 
+        while(count_tamanho < tamanho_msg_int){
+        	count_tamanho = count_tamanho + retorno;
+        	retorno = recv(ns, recvbuf, sizeof(recvbuf), 0); //recebe a mensagem do cliente e verifica o valor de retorno
+    		if (retorno == -1)
+	    	{
+	         	perror("Recvbuf()");
+		        close(ns);
+    		    pthread_exit(NULL);
+        	}
+        	else if (retorno == 0)
+	    	{
+	    	    printf("Thread encerrada pois o cliente foi fechado num momento inesperado\n");
+    	        close(ns);
+        	   	pthread_exit(NULL);
+	    	}
+	    	strcat(buffer_recebimento, recvbuf);	//continua escrevendo no vetor que sera convertido na foto
+        }
+        strcpy(buffer_recebimento, strtok(buffer_recebimento, "&"));
+        strcpy(novo->telefone, strtok(NULL, "$"));//salva o telefone
+
+
+   		
         //printa a mensagem
         if(strcmp(tipo_msg, "txt") == 0)
         {
-        	strcpy(novo->mensagem, strtok(recvbuf, "&"));
-        	strcpy(novo->telefone, strtok(NULL, "$"));
+        	strcpy(novo->mensagem, buffer_recebimento);
+        	//strcpy(novo->telefone, strtok(NULL, "$"));
         	novo->leitura = 0;
         	novo->prox = NULL;
         	strcpy(novo->nome, "");
@@ -978,12 +1016,11 @@ void *servidor()
         }
         else 	//qualquer extensao que nao seja "txt" e uma imagem
         {
-        	char * buffer_foto_rec;
         	foto_convertida = fopen(strcat("recebido.", tipo_msg), "wb");
-        	buffer_foto_rec = (char *)malloc(tamanho_msg);	//algo do tipo
-        	strcpy(buffer_foto_rec, strtok(recvbuf, "&"));
-        	strcpy(novo->telefone, strtok(NULL, "$"));
-        	fwrite(buffer_foto_rec, atoi(tamanho_msg), 1, foto_convertida);	//salva o conteudo da foto no arquivo aberto
+        	strcpy(novo->mensagem, "imagem");
+        	
+        	fwrite(buffer_recebimento, atoi(buffer_recebimento), 1, foto_convertida);	//salva o conteudo da foto no arquivo aberto
+        	fclose(foto_convertida);
         	
         	//salvar algo sobre a imagem e contato na lista ligada?
         }
