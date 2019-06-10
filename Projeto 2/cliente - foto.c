@@ -862,6 +862,7 @@ char **argv;
 }
 void *servidor()
 {
+	FILE * foto_convertida;
     unsigned short port;
 
     struct sockaddr_in client;
@@ -978,7 +979,7 @@ void *servidor()
         else 	//qualquer extensao que nao seja "txt" e uma imagem
         {
         	char * buffer_foto_rec;
-        	foto_convertida = fopen(strcat("recebido.", tipo_msg), wb);
+        	foto_convertida = fopen(strcat("recebido.", tipo_msg), "wb");
         	buffer_foto_rec = (char *)malloc(tamanho_msg);	//algo do tipo
         	strcpy(buffer_foto_rec, strtok(recvbuf, "&"));
         	strcpy(novo->telefone, strtok(NULL, "$"));
