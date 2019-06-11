@@ -602,7 +602,7 @@ char **argv;
             int auxCabecalho, auxTam;
             char auxCabecalhoChar[10];
             auxCabecalho = strlen(mensagem1) + 4; 
-            char cabecalho_grupo[200];
+            char cabecalho_grupo[4000];
             //printf("\n aux cabecalho: %d\n", auxCabecalho);   
             sprintf(auxCabecalhoChar, "%d", auxCabecalho);
             auxTam = strlen(auxCabecalhoChar);
