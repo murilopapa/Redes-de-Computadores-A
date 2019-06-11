@@ -493,15 +493,15 @@ char **argv;
                     }
                     else if (op_msg == 2) //foto
                     {
-                        char caminho[] = "gurilo.jpg";
+                        char caminho[];
                         int tamanho_foto;
                         char tamanho_fotoChar[10];
                         char *buffer_foto, *buffer_msg;
                         char extensao_foto[4];
                         printf("digite o nome do arquivo que deseja abrir: ");
-                        //fflush(stdin);
-                        //gets(caminho);
-                        //fflush(stdin);
+                        fflush(stdin);
+                        gets(caminho);
+                        fflush(stdin);
 
                         foto = fopen(caminho, "rb");
                         fseek(foto, 0L, SEEK_END);                       //acha o fim do arquivo
@@ -1015,7 +1015,6 @@ void *servidor()
             if (tamanho_msg_int == 0)
             {
                 //do while para garantir o recebimento da mensagem completa
-                //possivel solucao: a cada iteracao copiar recvbuf pra uma string de tamanho = tamanho_msg
                 strcpy(tamanho_msg, strtok(recvbuf, "&")); //salva em tipo_msg tudo que ha antes do &
                 strcpy(tipo_msg, strtok(NULL, "&"));       //salva em tamanho_msg tudo que ha antes do &
                 //printf("\nTipo msg: %s\n", tipo_msg);
