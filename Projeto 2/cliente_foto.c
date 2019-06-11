@@ -609,6 +609,7 @@ char **argv;
             strcat(cabecalho_grupo, telefone);
             strcat(cabecalho_grupo, "$");
             printf("\ncabecalho grupo: %s\n", cabecalho_grupo);
+            aux_contato1 = aux_print->raiz;
             while (aux_print->raiz)
             {
 
