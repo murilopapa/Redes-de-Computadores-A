@@ -470,15 +470,20 @@ char **argv;
                         strcat(cabecalho, "&");
                         strcat(cabecalho, telefone);
                         strcat(cabecalho, "$"); //modelo: "txt&178&ola, bom dia&9999999999$"
+                        //printf("\ncabecalho falso: %s\n", cabecalho);
                         int auxLen, auxLenTrue;
-                        char charLen[10], *cabecalhoTrue;
+                        char charLen[10];
                         auxLen = strlen(cabecalho);
                         sprintf(charLen, "%d", auxLen);
+                        //printf("\npos sprintf\n");
                         auxLenTrue = strlen(charLen) + auxLen;
+                        //printf("\npos strlen\n");
+                        char cabecalhoTrue[auxLenTrue + 8];
                         sprintf(cabecalhoTrue, "%d", auxLenTrue);
+                        //printf("\npos sprintf 2\n");
                         strcat(cabecalhoTrue, cabecalho);
-                        printf("\nTrue: %d\n", auxLenTrue);
-                        printf("\ncabecalho: %s\n", cabecalhoTrue);
+                        //printf("\nTrue: %d\n", auxLenTrue);
+                        //printf("\ncabecalho: %s\n", cabecalhoTrue);
                         if (send(s2, cabecalhoTrue, strlen(cabecalhoTrue) + 1, 0) < 0)
                         {
                             perror("Send()");
@@ -506,24 +511,24 @@ char **argv;
 
                         buffer_foto = (char *)malloc(75638);
                         buffer_msg = (char *)malloc(75608); //30 e suficiente para o cabecalho
-                        printf("\npassou buffer\n");
+                        //printf("\npassou buffer\n");
                         strtok(caminho, ".");
                         strcpy(extensao_foto, strtok(NULL, "\0"));
-                        printf("\nantes copy\n");
+                        //printf("\nantes copy\n");
                         sprintf(tamanho_fotoChar, "%d", tamanho_foto);
                         strcpy(buffer_foto, tamanho_fotoChar);
                         strcat(buffer_foto, "&");
                         strcat(buffer_foto, extensao_foto);
                         strcat(buffer_foto, "&");
-                        printf("\ncabecalho foto: %s\n", buffer_foto);
+                        //printf("\ncabecalho foto: %s\n", buffer_foto);
                         fread(buffer_msg, tamanho_foto, 1, foto); //salva o conteudo da foto na variavel buffer
-                        printf("buffer msg: %s\n", buffer_msg);
+                        //printf("buffer msg: %s\n", buffer_msg);
                         strcat(buffer_foto, buffer_msg);
                         strcat(buffer_foto, "&");
                         strcat(buffer_foto, telefone); //modelo: 20000&png&conteudo&telefone$
                         strcat(buffer_foto, "$");
-                        printf("\ncabecalho true:\n %s", buffer_foto);
-                        printf("\nbuffer foto: %d\n", strlen(buffer_foto));
+                        //printf("\ncabecalho true:\n %s", buffer_foto);
+                        //printf("\nbuffer foto: %d\n", strlen(buffer_foto));
                         int tamanho_enviado, num_pac = 0, resto = 0;
                         num_pac = tamanho_foto / 1024;
                         resto = tamanho_foto % 1024;
@@ -557,7 +562,7 @@ char **argv;
             struct grupo *aux_print;
             struct contato *aux_contato1;
             int count_grupo = 1;
-            char opcao_grupo[2], cabecalho_grupo[215];
+            char opcao_grupo[2];
             int opcao_grupo_int;
             aux_print = raiz_grupo;
             while (aux_print)
@@ -584,31 +589,33 @@ char **argv;
             {
                 aux_print = aux_print->prox;
             }
-            char mensagem[100]; // nao eh 101? Se sim, substituir por tamanhoBuffer
+            char mensagem1[200]; // nao eh 101? Se sim, substituir por tamanhoBuffer
             printf("\nMensagem: ");
 
             fflush(stdin);
-            gets(mensagem);
+            gets(mensagem1);
             fflush(stdin);
             //printf("Msg enviada: %s", mensagem);
-            strcat(mensagem, "&");
-            strcat(mensagem, telefone);
-            strcat(mensagem, "$");
+            strcat(mensagem1, "&");
+            strcat(mensagem1, telefone);
+            strcat(mensagem1, "$");
             int auxCabecalho, auxTam;
             char auxCabecalhoChar[10];
-            auxCabecalho = strlen(mensagem) + 4; 
-            printf("\n aux cabecalho: %d\n", auxCabecalho);   
+            auxCabecalho = strlen(mensagem1) + 4; 
+            char cabecalho_grupo[200];
+            //printf("\n aux cabecalho: %d\n", auxCabecalho);   
             sprintf(auxCabecalhoChar, "%d", auxCabecalho);
             auxTam = strlen(auxCabecalhoChar);
             auxCabecalho = auxCabecalho + auxTam;
-            printf("\naux cabecalho + tam num: %d", auxCabecalho);
+            //printf("\naux cabecalho + tam num: %d", auxCabecalho);
+
             sprintf(cabecalho_grupo, "%d", auxCabecalho);
             strcat(cabecalho_grupo, "&txt&");
-            strcat(cabecalho_grupo, mensagem);
+            strcat(cabecalho_grupo, mensagem1);
             strcat(cabecalho_grupo, "&");
             strcat(cabecalho_grupo, telefone);
             strcat(cabecalho_grupo, "$");
-            printf("\ncabecalho grupo: %s\n", cabecalho_grupo);
+            //printf("\ncabecalho grupo: %s\n", cabecalho_grupo);
             aux_contato1 = aux_print->raiz;
             while (aux_print->raiz)
             {
@@ -1011,18 +1018,18 @@ void *servidor()
                 //possivel solucao: a cada iteracao copiar recvbuf pra uma string de tamanho = tamanho_msg
                 strcpy(tamanho_msg, strtok(recvbuf, "&")); //salva em tipo_msg tudo que ha antes do &
                 strcpy(tipo_msg, strtok(NULL, "&"));       //salva em tamanho_msg tudo que ha antes do &
-                printf("\nTipo msg: %s\n", tipo_msg);
+                //printf("\nTipo msg: %s\n", tipo_msg);
                 buffer_recebimento = (char *)malloc(atoi(tamanho_msg));
                 strcpy(buffer_recebimento, strtok(NULL, "$"));
                 tamanho_msg_int = atoi(tamanho_msg);
-                printf("tamanho msg = %s\n", tamanho_msg);
+                //printf("tamanho msg = %s\n", tamanho_msg);
             }
             else
             {
                 strcat(buffer_recebimento, recvbuf); //continua escrevendo no vetor que sera convertido na foto
             }
-            printf("\nRecebido: %s\n\n", buffer_recebimento);
-            printf("\ntamanho recebido: %d\ntamanho real: %d\n", count_tamanho, tamanho_msg_int);
+            //printf("\nRecebido: %s\n\n", buffer_recebimento);
+            //printf("\ntamanho recebido: %d\ntamanho real: %d\n", count_tamanho, tamanho_msg_int);
         } while (count_tamanho < tamanho_msg_int + 1);
 
         char auxMsg[tamanho_msg_int + 1];
@@ -1035,7 +1042,7 @@ void *servidor()
             novo->mensagem = (char *)malloc(20000);
             strcpy(novo->mensagem, buffer_recebimento);
             //novo->mensagem = buffer_recebimento;
-            printf("\n\nMengasem novo->mensagem: %s\n\n", novo->mensagem);
+            //printf("\n\nMengasem novo->mensagem: %s\n\n", novo->mensagem);
             //strcpy(novo->telefone, strtok(NULL, "$"));
             novo->leitura = 0;
             novo->prox = NULL;
