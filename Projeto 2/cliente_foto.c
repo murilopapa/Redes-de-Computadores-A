@@ -463,7 +463,7 @@ char **argv;
                         char tamChar[20];
                         sprintf(tamChar, "%d", tam);
 
-                        printf("conteudo msg: %s\n", mensagem);
+                        //printf("conteudo msg: %s\n", mensagem);
                         //strcat(cabecalho, tamChar);
                         //strcat(cabecalho, "&");
                         strcat(cabecalho, mensagem);
@@ -488,34 +488,63 @@ char **argv;
                     }
                     else if (op_msg == 2) //foto
                     {
-                        char path[50];
+                        char caminho[] = "gurilo.jpg";
                         int tamanho_foto;
-                        char *buffer_foto;
-                        char extensao_foto[3];
-
+                        char tamanho_fotoChar[10];
+                        char *buffer_foto, *buffer_msg;
+                        char extensao_foto[4];
                         printf("digite o nome do arquivo que deseja abrir: ");
-                        fflush(stdin);
-                        gets(path);
-                        fflush(stdin);
+                        //fflush(stdin);
+                        //gets(caminho);
+                        //fflush(stdin);
 
-                        foto = fopen(path, "rb");
+                        foto = fopen(caminho, "rb");
                         fseek(foto, 0L, SEEK_END);                       //acha o fim do arquivo
                         tamanho_foto = ftell(foto);                      //acha a posicao do ultimo byte
                         printf("tamanho da imagem: %d\n", tamanho_foto); //tamanho do arquivo em bytes
                         rewind(foto);                                    //volta ao inicio do arquivo
 
-                        buffer_foto = (char *)malloc(tamanho_foto + 30); //30 e suficiente para o cabecalho
-
-                        fread(buffer_foto, tamanho_foto, 1, foto); //salva o conteudo da foto na variavel buffer
-                        strtok(path, ".");
+                        buffer_foto = (char *)malloc(75638);
+                        buffer_msg = (char *)malloc(75608); //30 e suficiente para o cabecalho
+                        printf("\npassou buffer\n");
+                        strtok(caminho, ".");
                         strcpy(extensao_foto, strtok(NULL, "\0"));
-
-                        strcat(extensao_foto, buffer_foto);
-                        strcat("&", buffer_foto);
-                        sprintf(buffer_foto, "%d", tamanho_foto);
-                        strcat("&", buffer_foto);
+                        printf("\nantes copy\n");
+                        sprintf(tamanho_fotoChar, "%d", tamanho_foto);
+                        strcpy(buffer_foto, tamanho_fotoChar);
                         strcat(buffer_foto, "&");
-                        strcat(telefone, "$"); //modelo: png&126371&conteudo&telefone$
+                        strcat(buffer_foto, extensao_foto);
+                        strcat(buffer_foto, "&");
+                        printf("\ncabecalho foto: %s\n", buffer_foto);
+                        fread(buffer_msg, tamanho_foto, 1, foto); //salva o conteudo da foto na variavel buffer
+                        printf("buffer msg: %s\n", buffer_msg);
+                        strcat(buffer_foto, buffer_msg);
+                        strcat(buffer_foto, "&");
+                        strcat(buffer_foto, telefone); //modelo: 20000&png&conteudo&telefone$
+                        strcat(buffer_foto, "$");
+                        printf("\ncabecalho true:\n %s", buffer_foto);
+                        printf("\nbuffer foto: %d\n", strlen(buffer_foto));
+                        int tamanho_enviado, num_pac = 0, resto = 0;
+                        num_pac = tamanho_foto / 1024;
+                        resto = tamanho_foto % 1024;
+                        int i = 0;
+                        for (i = 0; i < num_pac; i++)
+                        {
+                            if (send(s2, buffer_foto + (i * 1024), 1024 + 1, 0) < 0)
+                            {
+                                perror("Send()");
+                                exit(5);
+                            } //informa ao servidor o numero de telefone
+                        }
+                        if (resto > 0)
+                        {
+                            if (send(s2, buffer_foto + (i * 1024), resto + 1, 0) < 0)
+                            {
+                                perror("Send()");
+                                exit(5);
+                            } //informa ao servidor o numero de telefone
+                        }
+
                         fclose(foto);
                     }
                 }
@@ -528,7 +557,7 @@ char **argv;
             struct grupo *aux_print;
             struct contato *aux_contato1;
             int count_grupo = 1;
-            char opcao_grupo[2];
+            char opcao_grupo[2], cabecalho_grupo[215];
             int opcao_grupo_int;
             aux_print = raiz_grupo;
             while (aux_print)
@@ -565,6 +594,21 @@ char **argv;
             strcat(mensagem, "&");
             strcat(mensagem, telefone);
             strcat(mensagem, "$");
+            int auxCabecalho, auxTam;
+            char auxCabecalhoChar[10];
+            auxCabecalho = strlen(mensagem) + 4; 
+            printf("\n aux cabecalho: %d\n", auxCabecalho);   
+            sprintf(auxCabecalhoChar, "%d", auxCabecalho);
+            auxTam = strlen(auxCabecalhoChar);
+            auxCabecalho = auxCabecalho + auxTam;
+            printf("\naux cabecalho + tam num: %d", auxCabecalho);
+            sprintf(cabecalho_grupo, "%d", auxCabecalho);
+            strcat(cabecalho_grupo, "&txt&");
+            strcat(cabecalho_grupo, mensagem);
+            strcat(cabecalho_grupo, "&");
+            strcat(cabecalho_grupo, telefone);
+            strcat(cabecalho_grupo, "$");
+            printf("\ncabecalho grupo: %s\n", cabecalho_grupo);
             while (aux_print->raiz)
             {
 
@@ -640,7 +684,7 @@ char **argv;
                         exit(4);
                     }
 
-                    if (send(s2, mensagem, strlen(mensagem) + 1, 0) < 0)
+                    if (send(s2, cabecalho_grupo, strlen(cabecalho_grupo) + 1, 0) < 0)
                     {
                         perror("Send()");
                         exit(5);
@@ -918,7 +962,6 @@ void *servidor()
     {
         char tipo_msg[4];
         char tamanho_msg[50];
-        struct mensagem *novo = (struct mensagem *)malloc(sizeof(struct mensagem));
         struct mensagem *aux;
         char *nome_arquivo_foto = "output.";
         int namelen = sizeof(client);
@@ -979,16 +1022,19 @@ void *servidor()
             }
             printf("\nRecebido: %s\n\n", buffer_recebimento);
             printf("\ntamanho recebido: %d\ntamanho real: %d\n", count_tamanho, tamanho_msg_int);
-        } while (count_tamanho < tamanho_msg_int);
-        char auxMsg[200];
+        } while (count_tamanho < tamanho_msg_int + 1);
+
+        char auxMsg[tamanho_msg_int + 1];
         strcpy(auxMsg, strtok(buffer_recebimento, "&"));
+        struct mensagem *novo = (struct mensagem *)malloc(sizeof(struct mensagem));
         strcpy(novo->telefone, strtok(NULL, "$")); //salva o telefone
-        printf("\ntravo aqui\n");
         //printa a mensagem
         if (strcmp(tipo_msg, "txt") == 0)
         {
-            novo->mensagem = (char *)malloc(atoi(tamanho_msg));
-            novo->mensagem = buffer_recebimento;
+            novo->mensagem = (char *)malloc(20000);
+            strcpy(novo->mensagem, buffer_recebimento);
+            //novo->mensagem = buffer_recebimento;
+            printf("\n\nMengasem novo->mensagem: %s\n\n", novo->mensagem);
             //strcpy(novo->telefone, strtok(NULL, "$"));
             novo->leitura = 0;
             novo->prox = NULL;
@@ -1038,6 +1084,7 @@ void *servidor()
         }
         else //qualquer extensao que nao seja "txt" e uma imagem
         {
+
             foto_convertida = fopen(strcat("recebido.", tipo_msg), "wb");
             strcpy(novo->mensagem, "imagem");
 
