@@ -132,7 +132,7 @@ char **argv;
         perror("Connect()");
         exit(4);
     }
-    printf("\nInforme seu zap, rs: ");
+    printf("\nInforme seu numero: ");
     fflush(stdin);
     gets(telefone);
     fflush(stdin);
@@ -455,7 +455,7 @@ char **argv;
                         printf("\nMensagem: ");
 
                         fflush(stdin);
-                        gets(mensagem); //passando reto nao sei pq
+                        gets(mensagem);
                         gets(mensagem);
                         fflush(stdin);
 
@@ -463,27 +463,18 @@ char **argv;
                         char tamChar[20];
                         sprintf(tamChar, "%d", tam);
 
-                        //printf("conteudo msg: %s\n", mensagem);
-                        //strcat(cabecalho, tamChar);
-                        //strcat(cabecalho, "&");
                         strcat(cabecalho, mensagem);
                         strcat(cabecalho, "&");
                         strcat(cabecalho, telefone);
-                        strcat(cabecalho, "$"); //modelo: "txt&178&ola, bom dia&9999999999$"
-                        //printf("\ncabecalho falso: %s\n", cabecalho);
+                        strcat(cabecalho, "$"); //modelo: "178&txt&ola, bom dia&9999999999$"
                         int auxLen, auxLenTrue;
                         char charLen[10];
                         auxLen = strlen(cabecalho);
                         sprintf(charLen, "%d", auxLen);
-                        //printf("\npos sprintf\n");
                         auxLenTrue = strlen(charLen) + auxLen;
-                        //printf("\npos strlen\n");
                         char cabecalhoTrue[auxLenTrue + 8];
                         sprintf(cabecalhoTrue, "%d", auxLenTrue);
-                        //printf("\npos sprintf 2\n");
                         strcat(cabecalhoTrue, cabecalho);
-                        //printf("\nTrue: %d\n", auxLenTrue);
-                        //printf("\ncabecalho: %s\n", cabecalhoTrue);
                         if (send(s2, cabecalhoTrue, strlen(cabecalhoTrue) + 1, 0) < 0)
                         {
                             perror("Send()");
@@ -493,15 +484,15 @@ char **argv;
                     }
                     else if (op_msg == 2) //foto
                     {
-                        char caminho[];
+                        char caminho[] = "gurilo.jpg";
                         int tamanho_foto;
                         char tamanho_fotoChar[10];
                         char *buffer_foto, *buffer_msg;
                         char extensao_foto[4];
                         printf("digite o nome do arquivo que deseja abrir: ");
-                        fflush(stdin);
-                        gets(caminho);
-                        fflush(stdin);
+                        //fflush(stdin);
+                        //gets(caminho);
+                        //fflush(stdin);
 
                         foto = fopen(caminho, "rb");
                         fseek(foto, 0L, SEEK_END);                       //acha o fim do arquivo
@@ -1015,6 +1006,7 @@ void *servidor()
             if (tamanho_msg_int == 0)
             {
                 //do while para garantir o recebimento da mensagem completa
+                //possivel solucao: a cada iteracao copiar recvbuf pra uma string de tamanho = tamanho_msg
                 strcpy(tamanho_msg, strtok(recvbuf, "&")); //salva em tipo_msg tudo que ha antes do &
                 strcpy(tipo_msg, strtok(NULL, "&"));       //salva em tamanho_msg tudo que ha antes do &
                 //printf("\nTipo msg: %s\n", tipo_msg);
